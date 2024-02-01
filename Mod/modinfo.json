@@ -1,0 +1,11 @@
+{
+"id": "Intikus.soundthing",
+"name": "SoundThing",
+"version": "0.0.1",
+"authors": "Intikus",
+"description": "music will never be in rain world cereal1",
+"requirements": [],
+"requirements_names": [],
+"tags": ["Game Mechanics"],
+"checksum_override_version": false
+}

@@ -1,0 +1,6 @@
+C:\Users\Intikus\Code\SoundThing\bin\Debug\SoundThing.dll
+C:\Users\Intikus\Code\SoundThing\bin\Debug\SoundThing.pdb
+C:\Users\Intikus\Code\SoundThing\obj\Debug\SoundThing.csproj.AssemblyReference.cache
+C:\Users\Intikus\Code\SoundThing\obj\Debug\SoundThing.csproj.CoreCompileInputs.cache
+C:\Users\Intikus\Code\SoundThing\obj\Debug\SoundThing.dll
+C:\Users\Intikus\Code\SoundThing\obj\Debug\SoundThing.pdb
