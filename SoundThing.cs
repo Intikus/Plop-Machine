@@ -799,9 +799,6 @@ namespace SoundThing
         public static readonly SoundID LongswavC7 = new SoundID("LongswavC7", register: true);
 
 
-        public static readonly SoundID C1_LongBell = new SoundID("C1_LongBell.wav", register: true);
-        public static readonly SoundID C1_LongClar = new SoundID("C1_LongClar.wav", register: true);
-        public static readonly SoundID C1_LongLitri = new SoundID("C1_LongLitri.wav", register: true);
         public static readonly SoundID C1_LongSine = new SoundID("C1_LongSine.wav", register: true);
         public static readonly SoundID C1_LongTrisaw = new SoundID("C1_LongTrisaw.wav", register: true);
         public static readonly SoundID C1_MediumBell = new SoundID("C1_MediumBell.wav", register: true);
