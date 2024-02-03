@@ -52,7 +52,7 @@ namespace AudioFilters
 
             // make intensity
             // add different presets
-            // make tunable
+            // make tunable             //hi henpe i was just gonna do that :O
 
             // placed rectangle reverb area
         }

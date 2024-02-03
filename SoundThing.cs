@@ -12,6 +12,8 @@ using System.Globalization;
 using System.Collections;
 using System.Security.Cryptography;
 using System.Runtime.ExceptionServices;
+using System.IO;
+using System.Runtime.CompilerServices;
 
 [module: UnverifiableCode]
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
@@ -105,17 +107,23 @@ namespace SoundThing
         int agora = 1;
         float phob;
 
+        string CurrentRegion;
+
+        float distancetovibeepicentre = 0;
+
+        float intensity = (float)0.5;
+
+
+
+
+
 
         public void OnEnable()
         {
             On.Music.IntroRollMusic.ctor += IntroRollMusic_ctor;
-
-            //On.Player.Update += Player_Update;
-
             On.RainWorldGame.Update += RainWorldGame_Update;
         }
 
-        
         private string IntTOCKNote(int integer)
         {
             int treatedkey = CurrentKey + 6;
@@ -125,26 +133,129 @@ namespace SoundThing
             return Note;
         }
 
-        private SoundID[] SampDict(string key)
+        private SoundID[] SampDict(string length)
         {
             SoundID[] library = new SoundID[7]; //to do:  make better
             //switch the samples over to be categorised by short-medium-or-long, and region
-            switch (key)
+            string acronym = CurrentRegion.ToLower();
+            string patch = "sup";
+            switch (acronym)
             {
-                case "T":
-                    library = [TriangleC1, TriangleC2, TriangleC3, TriangleC4, TriangleC5, TriangleC6, TriangleC7];
+                case "su" or "hi":
+                    patch = "Trisaw";
                     break;
 
-                case "L":
-                    library = [LongswavC1, LongswavC2, LongswavC3, LongswavC4, LongswavC5, LongswavC6, LongswavC7];
+                case "gw" or "sh":
+                    patch = "Bell";
                     break;
 
+                case "ss" or "sb" or "sl":
+                    patch = "Litri";
+                    break;
+
+                case "cc" or "si":
+                    patch = "Sine";
+                    break;
+
+                case "ds" or "lf" or "uw":
+                    patch = "Clar";
+                    break;
                 default:
-                    library = [TriangleC1, TriangleC2, TriangleC3, TriangleC4, TriangleC5, TriangleC6, TriangleC7];
+                    patch = "Trisaw";
+                    break;
+            }
+            //cc(chimney cannopy)
+            //ds(drainage system)
+            //gw(garbage wastes)
+            //hi(industrial complex)
+            //lf(farm array)
+            //sb("sb subterranian")
+            //sh(shadow)
+            //si(sky place)
+            //sl(shoreline)
+            //ss(fivebepples)
+            //su(outskirts)
+            //uw(underhang and wall)
+            switch (length)
+            {
+                case "L":
+                    switch (patch)
+                    {
+                        case "Trisaw":
+                            library = [C1LongTrisaw, C2LongTrisaw, C3LongTrisaw, C4LongTrisaw, C5LongTrisaw, C6LongTrisaw, C7LongTrisaw];
+                            break;
+
+                        case "Clar":
+                            library = [C1LongClar, C2LongClar, C3LongClar, C4LongClar, C5LongClar, C6LongClar, C7LongClar];
+                            break;
+
+                        case "Litri":
+                            library = [C1LongLitri, C2LongLitri, C3LongLitri, C4LongLitri, C5LongLitri, C6LongLitri, C7LongLitri];
+                            break;
+
+                        case "Sine":
+                            library = [C1LongSine, C2LongSine, C3LongSine, C4LongSine, C5LongSine, C6LongSine, C7LongSine];
+                            break;
+
+                        case "Bell":
+                            library = [C1LongBell, C2LongBell, C3LongBell, C4LongBell, C5LongBell, C6LongBell, C7LongBell];
+                            break;
+                    }
+                    break;
+                case "M":
+                    switch (patch)
+                    {
+                        case "Trisaw":
+                            library = [C1MediumTrisaw, C2MediumTrisaw, C3MediumTrisaw, C4MediumTrisaw, C5MediumTrisaw, C6MediumTrisaw, C7MediumTrisaw];
+                            break;
+
+                        case "Clar":
+                            library = [C1MediumClar, C2MediumClar, C3MediumClar, C4MediumClar, C5MediumClar, C6MediumClar, C7MediumClar];
+                            break;
+
+                        case "Litri":
+                            library = [C1MediumLitri, C2MediumLitri, C3MediumLitri, C4MediumLitri, C5MediumLitri, C6MediumLitri, C7MediumLitri];
+                            break;
+
+                        case "Sine":
+                            library = [C1MediumSine, C2MediumSine, C3MediumSine, C4MediumSine, C5MediumSine, C6MediumSine, C7MediumSine];
+                            break;
+
+                        case "Bell":
+                            library = [C1MediumBell, C2MediumBell, C3MediumBell, C4MediumBell, C5MediumBell, C6MediumBell, C7MediumBell];
+                            break;
+
+                    }
+                    break;
+                case "S":
+                    switch (patch)
+                    {
+                        case "Trisaw":
+                            library = [C1ShortTrisaw, C2ShortTrisaw, C3ShortTrisaw, C4ShortTrisaw, C5ShortTrisaw, C6ShortTrisaw, C7ShortTrisaw];
+                            break;
+
+                        case "Clar":
+                            library = [C1ShortClar, C2ShortClar, C3ShortClar, C4ShortClar, C5ShortClar, C6ShortClar, C7ShortClar];
+                            break;
+
+                        case "Litri":
+                            library = [C1ShortLitri, C2ShortLitri, C3ShortLitri, C4ShortLitri, C5ShortLitri, C6ShortLitri, C7ShortLitri];
+                            break;
+
+                        case "Sine":
+                            library = [C1ShortSine, C2ShortSine, C3ShortSine, C4ShortSine, C5ShortSine, C6ShortSine, C7ShortSine];
+                            break;
+
+                        case "Bell":
+                            library = [C1ShortBell, C2ShortBell, C3ShortBell, C4ShortBell, C5ShortBell, C6ShortBell, C7ShortBell];
+                            break;
+
+                    }
                     break;
             }
             return library;
         }
+
         private int Peeps(int low, int high)
         {
             
@@ -158,7 +269,6 @@ namespace SoundThing
             return lol;
         }
 
-
         private int Peep(int value)
         {
             //take 10 as an example, agora being.... 2-3 people? 
@@ -170,33 +280,27 @@ namespace SoundThing
             //if (agora > 1) { phob = (float)((Mathf.Log((float)(agora * 0.7)) / 3.8) + 1); }
             if (agora > 1) { phob = (float)((Mathf.Log((float)(agora * 0.8)) / 4.5) + 1); }
 
-            //Debug.Log(phob);
+            //Debug(phob);
             float fvalue = value;
-            //Debug.Log(fvalue);
-
             float avalue = fvalue / phob;
-            //Debug.Log(avalue);
-
-
-
 
             string st1 = avalue.ToString();
-            Debug.Log(st1);
+            //Debug($"{st1}, Peep");
 
-            //Debug.Log(st1);
+            //Debug(st1);
             int PointPos = st1.IndexOf('.');
 
-            Debug.Log(PointPos);
+            //Debug($"PointPos, Funny");
             if (PointPos == -1) { st1 += ".00000"; }
             else
             {
-                //Debug.Log("A");
+                //Debug("A");
                 string lettersafterpoint = st1.Substring(PointPos);
-                //Debug.Log("B");
+                //Debug("B");
                 int lettersamount = lettersafterpoint.Length - 1;
 
-                //Debug.Log("C");
-                //Debug.Log(lettersamount);
+                //Debug("C");
+                //Debug(lettersamount);
 
 
                 if (lettersamount < 5)
@@ -205,18 +309,12 @@ namespace SoundThing
                     else if (lettersamount == 3) { st1 += "00"; }
                     else if (lettersamount == 2) { st1 += "000"; }
                     else if (lettersamount == 1) { st1 += "0000"; }
-                    else if (lettersamount == 0) { Debug.Log("what"); st1 += "00000"; }
+                    else if (lettersamount == 0) { Debug("what"); st1 += "00000"; }
                 }
-                Debug.Log("D");
-                Debug.Log(st1);
+                //Debug($"{st1}, Peep 2");
             }
 
             string[] parts = st1.Split('.');
-            //if (parts.Length == 1)
-            //{
-            //
-            //}
-
             int former = int.Parse(parts[0]);
             string latter = parts[1].Substring(0, 5);
             int latterint = int.Parse(latter);
@@ -237,15 +335,20 @@ namespace SoundThing
             string[] parts = s.Split('-');
 
 
-            string slib = parts[0];
+            string slib = parts[0]; //either L for Long, M for Medium, or S for Short
             int oct = int.Parse(parts[1]);
             int ind = int.Parse(parts[2]);
 
-            //Debug.Log($"So the string is {s}, which counts as {parts.Length} amounts of parts. {slib}, {oct}, {ind}");
+            Debug($"So the string is {s}, which counts as {parts.Length} amounts of parts. {slib}, {oct}, {ind}");
 
             SoundID[] slopb = SampDict(slib);
 
+            Debug($"and it picked a sample through the SampDict, called {slopb}");  
+            Debug($"Samples picked: [{string.Join(", ", slopb.ToList())}]");
+
             SoundID sampleused = slopb[oct - 1];
+
+            Debug($"It uses the sample {sampleused}");
 
             string NoteNow = IntTOCKNote(ind);
             int transposition = 0;
@@ -300,7 +403,6 @@ namespace SoundThing
                     break;
             }
 
-
             float speeed = 1;
 
             speeed *= Mathf.Pow(magicnumber, transposition);
@@ -310,7 +412,7 @@ namespace SoundThing
 
             if (RainWorld.ShowLogs)
             {
-                //Debug.Log($"the note that played: {NoteNow}, {transposition} at {CurrentKey}");
+                //Debug($"the note that played: {NoteNow}, {transposition} at {CurrentKey}");
             }
 
             PlayThing(sampleused, mic, speeed);
@@ -319,11 +421,12 @@ namespace SoundThing
 
         private void PlayThing(SoundID Note, VirtualMicrophone virtualMicrophone, float speed)
         {
+
             virtualMicrophone.PlaySound(Note, 0f, 0.42f, speed);
 
             if (RainWorld.ShowLogs)
             {
-                //    Debug.Log($"the note that played: {Note} at {speed}");
+                Debug($"the note that played: {Note} at {speed}");
             }
         }
 
@@ -339,40 +442,38 @@ namespace SoundThing
             if (CurrentKey == 9) { CurrentKey = -3; }
         }
 
-        //bear with me as i struggle to figure out how to 
-        //catalogue the information of a chord entry
         string[,] ChordInfos =
         {
-            { "Triad", "Chord", "L-4-1 L-4-3 L-4-5,L-3-1 L-3-3 L-2-5 L-2-6 L-2-4", "Triad,40,50,T-4-6 T-4-5,0|Triad,40,50,T-4-3,0|Balaboo,40,50,T-4-3 T-3-4,0|Finga,60,90,T-4-5,0"},
-            { "Balaboo", "Chord", "L-4-2 L-4-3 L-4-6,L-3-2 L-2-6 L-2-5", "Triad,40,60,0,0|Routsi,40,60,T-4-5,0"},
-            { "Finga", "Chord", "L-4-3 L-4-5 L-4-7,L-3-4 L-3-5 L-3-6 L-2-1", "Triad,40,50,0,0|Balaboo,100,120,T-5-3 T-4-7 T-4-5,+1"},
-            { "Routsi", "Chord", "L-4-3 L-4-5 L-4-6,L-2-5 L-2-6 L-3-1 L-3-3", "Balaboo,30,60,T-4-5 T-5-1,0|Balaboo,30,60,T-5-1,+2"},
-            { "Grast", "Chord", "L-4-4 L-4-5 L-5-1,L-3-2 L-3-4 L-3-5", "Finga,45,70,T-5-3 T-4-5,0|Grast,30,60,T-5-1,-2|Rhast,20,30,T-4-6,0"},
-            { "Rhast", "Chord", "L-4-1 L-4-4 L-4-6,L-3-4 L-3-2 L-3-1 L-2-6 L-2-4", "Balaboo,40,59,T-4-5,0|Rhast,40,50,T-4-7,+1|Triad,50,60,T-5-1,0" },
-            { "Yooo", "Riff", "T-4-1,T-4-2,T-4-5 T-4-7,25,T-4-5 T-4-7,T-4-5 T-4-7,1,T-5-3 T-4-4,T-5-7 T-5-3,21,!,30,T-4-3,T-4-7,T-5-3", "Triad" }
+            { "Triad", "Chord", "L-4-1 L-4-3 L-4-5,L-3-1 L-3-3 L-2-5 L-2-6 L-2-4", "Triad,40,50,S-4-6 S-4-5,0|Triad,40,50,S-4-3,0|Balaboo,40,50,S-4-3 S-3-4,0|Finga,60,90,S-4-5,0"},
+            { "Balaboo", "Chord", "L-4-2 L-4-3 L-4-6,L-3-2 L-2-6 L-2-5", "Triad,40,60,0,0|Routsi,40,60,S-4-5,0"},
+            { "Finga", "Chord", "L-4-3 L-4-5 L-4-7,L-3-4 L-3-5 L-3-6 L-2-1", "Triad,40,50,0,0|Balaboo,100,120,S-5-3 S-4-7 S-4-5,+1"},
+            { "Routsi", "Chord", "L-4-3 L-4-5 L-4-6,L-2-5 L-2-6 L-3-1 L-3-3", "Balaboo,30,60,S-4-5 S-5-1,0|Balaboo,30,60,S-5-1,+2"},
+            { "Grast", "Chord", "L-4-4 L-4-5 L-5-1,L-3-2 L-3-4 L-3-5", "Finga,45,70,S-5-3 S-4-5,0|Grast,30,60,S-5-1,-2|Rhast,20,30,S-4-6,0"},
+            { "Rhast", "Chord", "L-4-1 L-4-4 L-4-6,L-3-4 L-3-2 L-3-1 L-2-6 L-2-4", "Balaboo,40,59,S-4-5,0|Rhast,40,50,S-4-7,+1|Triad,50,60,S-5-1,0" },
+            { "Yooo", "Riff", "S-4-1,S-4-2,S-4-5 S-4-7,25,S-4-5 S-4-7,S-4-5 S-4-7,1,S-5-3 S-4-4,S-5-7 S-5-3,21,!,30,S-4-3,S-4-7,S-5-3", "Triad" }
             //{ "Firstsample", "Entry", "Lol,2,200", "Triad" }
         };
 
         private void PlayEntry(VirtualMicrophone mic)
         {
-            
+            //Debug("yo sup dude");
+
             // string[] CurrentChordLol = new string[3];
 
             //string sowhatwasthechorddude = "yo";                obsolete
-            // Debug.Log("yo sup dude");
 
             // this part will check if it's a chord or entry, and seperate it to be one of the two
 
             if (EntryRequest == true)
                 for (int i = 0; i < ChordInfos.GetLength(0); i++)
                 {
-                    //Debug.Log($"Nuclear {UpcomingEntry} vs Coughing {ChordInfos[i, 0]}... Round {i}, begin!");
+                    //Debug($"Nuclear {UpcomingEntry} vs Coughing {ChordInfos[i, 0]}... Round {i}, begin!");
 
-                    Debug.Log("ummm");
+                    //Debug("ummm");
                     if (UpcomingEntry == ChordInfos[i, 0])
                     {
-                        Debug.Log($"so it tested with {UpcomingEntry}");
-                        Debug.Log($"{ChordInfos[i, 0]},{ChordInfos[i, 1]},{ChordInfos[i, 2]},{ChordInfos[i, 3]}");
+                        //Debug($"so it tested with {UpcomingEntry}");
+                        //Debug($"{ChordInfos[i, 0]},{ChordInfos[i, 1]},{ChordInfos[i, 2]},{ChordInfos[i, 3]}");
 
                         switch (ChordInfos[i, 1])
                         {
@@ -385,7 +486,7 @@ namespace SoundThing
                             case "Riff":
                                 riffline = ChordInfos[i, 2];
                                 riffleadups = ChordInfos[i, 3];
-                                //Debug.Log(ChordInfos[i, 3] +" " + riffleadups);
+                                //Debug(ChordInfos[i, 3] +" " + riffleadups);
                                 entryriff = true;
                                 break;
                             case "Sample":
@@ -413,14 +514,14 @@ namespace SoundThing
                 for (int i = 0; i < notes.Length; i++ )
                 {
                     IntiN(notes[i], mic);
-                    //Debug.Log($"It is playing the Notes?{chord},{notes.Length},{i}, {notes[i]}... {debugtimer}");    
+                    //Debug($"It is playing the Notes?{chord},{notes.Length},{i}, {notes[i]}... {debugtimer}");    
                 }
-                //Debug.Log($"done playing them???{EntryRequest}");                                  !!!!!!!!!!
+                //Debug($"done playing them???{EntryRequest}");                                  !!!!!!!!!!
                 string[] bassnotes = bass.Split(' ');
                 int sowhichoneisitboss = RXRandom.Range(0, bassnotes.Length);
            
                 IntiN(bassnotes[sowhichoneisitboss], mic); //THIS is where it fucked up, which was because it had a space before the comma
-                Debug.Log("And i played a Bass note");
+                //Debug("And i played a Bass note");
 
 
                 //all notes have been played, moving onto liason
@@ -483,7 +584,7 @@ namespace SoundThing
                     }
                 }
                 playingchord = true;
-                Debug.Log($"Info given of: Timer: {low} {high}, {chordstopwatch}, And times: {Ltime1}, {Ltime2}, {Ltime3}, and Key {CurrentKey} of chord (put another name here)... {debugtimer}");
+                //Debug($"Info given of: Timer: {low} {high}, {chordstopwatch}, And times: {Ltime1}, {Ltime2}, {Ltime3}, and Key {CurrentKey} of chord (put another name here)... {debugtimer}");
 
             }
 
@@ -493,7 +594,7 @@ namespace SoundThing
                 {
                     EntryRequest = true;
                     UpcomingEntry = chordqueuedentry;
-                    //Debug.Log($"{UpcomingEntry} will play");       
+                    //Debug($"{UpcomingEntry} will play");       
                     playingchord = false;
                 }
                 else
@@ -569,17 +670,17 @@ namespace SoundThing
                     {
                         riffcurrentvar = theline[riffindex];
                         string[] splitvar = riffcurrentvar.Split(' ');
-                        //Debug.Log("hullo");
+                        //Debug("hullo");
                         //randomise it, if it's an array, then also remove extras if else
 
-                        //Debug.Log($"{riffindex}, {rifflength}, {riffcurrentvar}, {theline}");
-                        //Debug.Log(splitvar[0]);
-                        //Debug.Log(splitvar.Length);
+                        //Debug($"{riffindex}, {rifflength}, {riffcurrentvar}, {theline}");
+                        //Debug(splitvar[0]);
+                        //Debug(splitvar.Length);
                         int whichofthese = RXRandom.Range(0, splitvar.Length);
                         string treatedvar = splitvar[whichofthese];
 
 
-                        Debug.Log("hello");
+                        //Debug("hello");
                         //testing if it's just a number
                         bool umitsanumber = true;
                         try
@@ -604,12 +705,12 @@ namespace SoundThing
                             {
                                 case "!":
                                     EntryRequest = true;
-                                    //Debug.Log(riffleadups);
+                                    //Debug(riffleadups);
                                     string[] leadups = riffleadups.Split('|');
                                     int butwhatnowboss = RXRandom.Range(0, leadups.Length);
                                     string leadup = leadups[butwhatnowboss];
                                     UpcomingEntry = leadup;
-                                    //Debug.Log(riffleadups + " " + leadups + " "+ butwhatnowboss + " " + leadup + " " + UpcomingEntry);
+                                    //Debug(riffleadups + " " + leadups + " "+ butwhatnowboss + " " + leadup + " " + UpcomingEntry);
                                     break;
                                 default: //will assume its a note for now
                                     treatedvar = treatedvar.ToString();
@@ -617,13 +718,13 @@ namespace SoundThing
                                     break;
                             }
                         }
-                        //Debug.Log("HEY THIS ONE DOES THE THING IT*S COOL");
+                        //Debug("HEY THIS ONE DOES THE THING IT*S COOL");
                         riffindex++;
                     }
                     else
                     {
                         playingriff = false;
-                        //Debug.Log("it is OVER");
+                        //Debug("it is OVER");
                     }
                 }
             }
@@ -704,7 +805,7 @@ namespace SoundThing
                 if (samplestopwatch == 0)
                 {
                     playingsample = false;
-                    //Debug.Log(riffleadups);
+                    //Debug(riffleadups);
                     string[] leadups = sampleleadups.Split('|');
                     int butwhatnowboss = RXRandom.Range(0, leadups.Length);
                     string leadup = leadups[butwhatnowboss];
@@ -729,45 +830,67 @@ namespace SoundThing
             }
         }
 
-
-
         //private void Player_Update(On.Player.orig_Update orig, Player self, bool eu)
         private void RainWorldGame_Update(On.RainWorldGame.orig_Update orig, RainWorldGame self)
         {
             orig(self);
-            var mic = self.cameras[0].virtualMicrophone;
-
             debugtimer++;
+            var mic = self.cameras[0].virtualMicrophone;
+            CurrentRegion = self.world.region.name;
 
-            PlayEntry(mic);
 
-            // if (RainWorld.ShowLogs)
-            // {
-            //     lel = Peep(100);
-            //     lel2 = Peeps(2000, 3000);
-            //     Debug.Log($"{lel}, {lel2}");
-            //     Debug.Log(agora);
-            // }
-            // 
-            // 
-            // if (Input.GetKey("1") && !yoyo)
-            // {
-            //     agora -= 1;
-            // 
-            // }
-            // yoyo = Input.GetKey("1");
-            // 
-            // if (Input.GetKey("2") && !yoyo2)
-            // {
-            //     agora += 1;
-            // }
-            // yoyo2 = Input.GetKey("2"); 
-            // 
-            // if (Input.GetKey("3") && !yoyo3)
-            // {
-            //     agora = 0;
-            // }
-            // yoyo3 = Input.GetKey("3");
+            //intensity = intensity;
+
+
+
+            //Debug($"CurrentRegion is: {CurrentRegion}");
+            if (CurrentRegion == null)
+            {
+                CurrentRegion = "sl";
+            }
+
+            if (debugtimer % 160 == 00) { mic.PlaySound(C4ShortClar, 0f, intensity*0.5f, 1); }
+            if (debugtimer % 160 == 20) { mic.PlaySound(C4ShortClar, 0f, intensity * 0.5f, (float)Math.Pow(magicnumber, 4)); }
+            if (debugtimer % 160 == 40) { mic.PlaySound(C4ShortClar, 0f, intensity * 0.5f, (float)Math.Pow(magicnumber, 7)); }
+            if (debugtimer % 160 == 60) { mic.PlaySound(C4ShortClar, 0f, intensity * 0.5f, (float)Math.Pow(magicnumber, 11)); }
+
+            //PlayEntry(mic);
+
+            //a live variable is one that must be updated (((((Life advice))))
+
+
+
+
+
+            //if (RainWorld.ShowLogs)
+            //{
+            //    lel = Peep(100);
+            //    lel2 = Peeps(2000, 3000);
+            //    Debug($"{lel}, {lel2}");
+            //    Debug(agora);
+            //}
+            Debug(intensity);
+
+            if (Input.GetKey("1") && !yoyo)
+            {
+                //agora -= 1;
+                intensity -= 0.1f;
+            }
+            yoyo = Input.GetKey("1");
+            
+            if (Input.GetKey("2") && !yoyo2)
+            {
+                //agora += 1;
+                intensity += 0.1f;
+            }
+            yoyo2 = Input.GetKey("2"); 
+            
+            if (Input.GetKey("3") && !yoyo3)
+            {
+                //agora = 0;
+                intensity = 0f;
+            }
+            yoyo3 = Input.GetKey("3");
 
         }
 
@@ -799,111 +922,117 @@ namespace SoundThing
         public static readonly SoundID LongswavC7 = new SoundID("LongswavC7", register: true);
 
 
-        public static readonly SoundID C1_LongSine = new SoundID("C1_LongSine.wav", register: true);
-        public static readonly SoundID C1_LongTrisaw = new SoundID("C1_LongTrisaw.wav", register: true);
-        public static readonly SoundID C1_MediumBell = new SoundID("C1_MediumBell.wav", register: true);
-        public static readonly SoundID C1_MediumClar = new SoundID("C1_MediumClar.wav", register: true);
-        public static readonly SoundID C1_MediumLitri = new SoundID("C1_MediumLitri.wav", register: true);
-        public static readonly SoundID C1_MediumSine = new SoundID("C1_MediumSine.wav", register: true);
-        public static readonly SoundID C1_MediumTrisaw = new SoundID("C1_MediumTrisaw.wav", register: true);
-        public static readonly SoundID C1_ShortBell = new SoundID("C1_ShortBell.wav", register: true);
-        public static readonly SoundID C1_ShortClar = new SoundID("C1_ShortClar.wav", register: true);
-        public static readonly SoundID C1_ShortLitri = new SoundID("C1_ShortLitri.wav", register: true);
-        public static readonly SoundID C1_ShortSine = new SoundID("C1_ShortSine.wav", register: true);
-        public static readonly SoundID C1_ShortTrisaw = new SoundID("C1_ShortTrisaw.wav", register: true);
-        public static readonly SoundID C2_LongBell = new SoundID("C2_LongBell.wav", register: true);
-        public static readonly SoundID C2_LongClar = new SoundID("C2_LongClar.wav", register: true);
-        public static readonly SoundID C2_LongLitri = new SoundID("C2_LongLitri.wav", register: true);
-        public static readonly SoundID C2_LongSine = new SoundID("C2_LongSine.wav", register: true);
-        public static readonly SoundID C2_LongTrisaw = new SoundID("C2_LongTrisaw.wav", register: true);
-        public static readonly SoundID C2_MediumBell = new SoundID("C2_MediumBell.wav", register: true);
-        public static readonly SoundID C2_MediumClar = new SoundID("C2_MediumClar.wav", register: true);
-        public static readonly SoundID C2_MediumLitri = new SoundID("C2_MediumLitri.wav", register: true);
-        public static readonly SoundID C2_MediumSine = new SoundID("C2_MediumSine.wav", register: true);
-        public static readonly SoundID C2_MediumTrisaw = new SoundID("C2_MediumTrisaw.wav", register: true);
-        public static readonly SoundID C2_ShortBell = new SoundID("C2_ShortBell.wav", register: true);
-        public static readonly SoundID C2_ShortClar = new SoundID("C2_ShortClar.wav", register: true);
-        public static readonly SoundID C2_ShortLitri = new SoundID("C2_ShortLitri.wav", register: true);
-        public static readonly SoundID C2_ShortSine = new SoundID("C2_ShortSine.wav", register: true);
-        public static readonly SoundID C2_ShortTrisaw = new SoundID("C2_ShortTrisaw.wav", register: true);
-        public static readonly SoundID C3_LongBell = new SoundID("C3_LongBell.wav", register: true);
-        public static readonly SoundID C3_LongClar = new SoundID("C3_LongClar.wav", register: true);
-        public static readonly SoundID C3_LongLitri = new SoundID("C3_LongLitri.wav", register: true);
-        public static readonly SoundID C3_LongSine = new SoundID("C3_LongSine.wav", register: true);
-        public static readonly SoundID C3_LongTrisaw = new SoundID("C3_LongTrisaw.wav", register: true);
-        public static readonly SoundID C3_MediumBell = new SoundID("C3_MediumBell.wav", register: true);
-        public static readonly SoundID C3_MediumClar = new SoundID("C3_MediumClar.wav", register: true);
-        public static readonly SoundID C3_MediumLitri = new SoundID("C3_MediumLitri.wav", register: true);
-        public static readonly SoundID C3_MediumSine = new SoundID("C3_MediumSine.wav", register: true);
-        public static readonly SoundID C3_MediumTrisaw = new SoundID("C3_MediumTrisaw.wav", register: true);
-        public static readonly SoundID C3_ShortBell = new SoundID("C3_ShortBell.wav", register: true);
-        public static readonly SoundID C3_ShortClar = new SoundID("C3_ShortClar.wav", register: true);
-        public static readonly SoundID C3_ShortLitri = new SoundID("C3_ShortLitri.wav", register: true);
-        public static readonly SoundID C3_ShortSine = new SoundID("C3_ShortSine.wav", register: true);
-        public static readonly SoundID C3_ShortTrisaw = new SoundID("C3_ShortTrisaw.wav", register: true);
-        public static readonly SoundID C4_LongBell = new SoundID("C4_LongBell.wav", register: true);
-        public static readonly SoundID C4_LongClar = new SoundID("C4_LongClar.wav", register: true);
-        public static readonly SoundID C4_LongLitri = new SoundID("C4_LongLitri.wav", register: true);
-        public static readonly SoundID C4_LongSine = new SoundID("C4_LongSine.wav", register: true);
-        public static readonly SoundID C4_LongTrisaw = new SoundID("C4_LongTrisaw.wav", register: true);
-        public static readonly SoundID C4_MediumBell = new SoundID("C4_MediumBell.wav", register: true);
-        public static readonly SoundID C4_MediumClar = new SoundID("C4_MediumClar.wav", register: true);
-        public static readonly SoundID C4_MediumLitri = new SoundID("C4_MediumLitri.wav", register: true);
-        public static readonly SoundID C4_MediumSine = new SoundID("C4_MediumSine.wav", register: true);
-        public static readonly SoundID C4_MediumTrisaw = new SoundID("C4_MediumTrisaw.wav", register: true);
-        public static readonly SoundID C4_ShortBell = new SoundID("C4_ShortBell.wav", register: true);
-        public static readonly SoundID C4_ShortClar = new SoundID("C4_ShortClar.wav", register: true);
-        public static readonly SoundID C4_ShortLitri = new SoundID("C4_ShortLitri.wav", register: true);
-        public static readonly SoundID C4_ShortSine = new SoundID("C4_ShortSine.wav", register: true);
-        public static readonly SoundID C4_ShortTrisaw = new SoundID("C4_ShortTrisaw.wav", register: true);
-        public static readonly SoundID C5_LongBell = new SoundID("C5_LongBell.wav", register: true);
-        public static readonly SoundID C5_LongClar = new SoundID("C5_LongClar.wav", register: true);
-        public static readonly SoundID C5_LongLitri = new SoundID("C5_LongLitri.wav", register: true);
-        public static readonly SoundID C5_LongSine = new SoundID("C5_LongSine.wav", register: true);
-        public static readonly SoundID C5_LongTrisaw = new SoundID("C5_LongTrisaw.wav", register: true);
-        public static readonly SoundID C5_MediumBell = new SoundID("C5_MediumBell.wav", register: true);
-        public static readonly SoundID C5_MediumClar = new SoundID("C5_MediumClar.wav", register: true);
-        public static readonly SoundID C5_MediumLitri = new SoundID("C5_MediumLitri.wav", register: true);
-        public static readonly SoundID C5_MediumSine = new SoundID("C5_MediumSine.wav", register: true);
-        public static readonly SoundID C5_MediumTrisaw = new SoundID("C5_MediumTrisaw.wav", register: true);
-        public static readonly SoundID C5_ShortBell = new SoundID("C5_ShortBell.wav", register: true);
-        public static readonly SoundID C5_ShortClar = new SoundID("C5_ShortClar.wav", register: true);
-        public static readonly SoundID C5_ShortLitri = new SoundID("C5_ShortLitri.wav", register: true);
-        public static readonly SoundID C5_ShortSine = new SoundID("C5_ShortSine.wav", register: true);
-        public static readonly SoundID C5_ShortTrisaw = new SoundID("C5_ShortTrisaw.wav", register: true);
-        public static readonly SoundID C6_LongBell = new SoundID("C6_LongBell.wav", register: true);
-        public static readonly SoundID C6_LongClar = new SoundID("C6_LongClar.wav", register: true);
-        public static readonly SoundID C6_LongLitri = new SoundID("C6_LongLitri.wav", register: true);
-        public static readonly SoundID C6_LongSine = new SoundID("C6_LongSine.wav", register: true);
-        public static readonly SoundID C6_LongTrisaw = new SoundID("C6_LongTrisaw.wav", register: true);
-        public static readonly SoundID C6_MediumBell = new SoundID("C6_MediumBell.wav", register: true);
-        public static readonly SoundID C6_MediumClar = new SoundID("C6_MediumClar.wav", register: true);
-        public static readonly SoundID C6_MediumLitri = new SoundID("C6_MediumLitri.wav", register: true);
-        public static readonly SoundID C6_MediumSine = new SoundID("C6_MediumSine.wav", register: true);
-        public static readonly SoundID C6_MediumTrisaw = new SoundID("C6_MediumTrisaw.wav", register: true);
-        public static readonly SoundID C6_ShortBell = new SoundID("C6_ShortBell.wav", register: true);
-        public static readonly SoundID C6_ShortClar = new SoundID("C6_ShortClar.wav", register: true);
-        public static readonly SoundID C6_ShortLitri = new SoundID("C6_ShortLitri.wav", register: true);
-        public static readonly SoundID C6_ShortSine = new SoundID("C6_ShortSine.wav", register: true);
-        public static readonly SoundID C6_ShortTrisaw = new SoundID("C6_ShortTrisaw.wav", register: true);
-        public static readonly SoundID C7_LongBell = new SoundID("C7_LongBell.wav", register: true);
-        public static readonly SoundID C7_LongClar = new SoundID("C7_LongClar.wav", register: true);
-        public static readonly SoundID C7_LongLitri = new SoundID("C7_LongLitri.wav", register: true);
-        public static readonly SoundID C7_LongSine = new SoundID("C7_LongSine.wav", register: true);
-        public static readonly SoundID C7_LongTrisaw = new SoundID("C7_LongTrisaw.wav", register: true);
-        public static readonly SoundID C7_MediumBell = new SoundID("C7_MediumBell.wav", register: true);
-        public static readonly SoundID C7_MediumClar = new SoundID("C7_MediumClar.wav", register: true);
-        public static readonly SoundID C7_MediumLitri = new SoundID("C7_MediumLitri.wav", register: true);
-        public static readonly SoundID C7_MediumSine = new SoundID("C7_MediumSine.wav", register: true);
-        public static readonly SoundID C7_MediumTrisaw = new SoundID("C7_MediumTrisaw.wav", register: true);
-        public static readonly SoundID C7_ShortBell = new SoundID("C7_ShortBell.wav", register: true);
-        public static readonly SoundID C7_ShortClar = new SoundID("C7_ShortClar.wav", register: true);
-        public static readonly SoundID C7_ShortLitri = new SoundID("C7_ShortLitri.wav", register: true);
-        public static readonly SoundID C7_ShortSine = new SoundID("C7_ShortSine.wav", register: true);
-        public static readonly SoundID C7_ShortTrisaw = new SoundID("C7_ShortTrisaw.wav", register: true);
+        public static readonly SoundID C1LongSine = new SoundID("C1LongSine", register: true);
+        public static readonly SoundID C2LongSine = new SoundID("C2LongSine", register: true);
+        public static readonly SoundID C3LongSine = new SoundID("C3LongSine", register: true);
+        public static readonly SoundID C4LongSine = new SoundID("C4LongSine", register: true);
+        public static readonly SoundID C5LongSine = new SoundID("C5LongSine", register: true);
+        public static readonly SoundID C6LongSine = new SoundID("C6LongSine", register: true);
+        public static readonly SoundID C7LongSine = new SoundID("C7LongSine", register: true);
+        public static readonly SoundID C1MediumSine = new SoundID("C1MediumSine", register: true);
+        public static readonly SoundID C2MediumSine = new SoundID("C2MediumSine", register: true);
+        public static readonly SoundID C3MediumSine = new SoundID("C3MediumSine", register: true);
+        public static readonly SoundID C4MediumSine = new SoundID("C4MediumSine", register: true);
+        public static readonly SoundID C5MediumSine = new SoundID("C5MediumSine", register: true);
+        public static readonly SoundID C6MediumSine = new SoundID("C6MediumSine", register: true);
+        public static readonly SoundID C7MediumSine = new SoundID("C7MediumSine", register: true);
+        public static readonly SoundID C1ShortSine = new SoundID("C1ShortSine", register: true);
+        public static readonly SoundID C2ShortSine = new SoundID("C2ShortSine", register: true);
+        public static readonly SoundID C3ShortSine = new SoundID("C3ShortSine", register: true);
+        public static readonly SoundID C4ShortSine = new SoundID("C4ShortSine", register: true);
+        public static readonly SoundID C5ShortSine = new SoundID("C5ShortSine", register: true);
+        public static readonly SoundID C6ShortSine = new SoundID("C6ShortSine", register: true);
+        public static readonly SoundID C7ShortSine = new SoundID("C7ShortSine", register: true);
+        public static readonly SoundID C1LongLitri = new SoundID("C1LongLitri", register: true);
+        public static readonly SoundID C2LongLitri = new SoundID("C2LongLitri", register: true);
+        public static readonly SoundID C3LongLitri = new SoundID("C3LongLitri", register: true);
+        public static readonly SoundID C4LongLitri = new SoundID("C4LongLitri", register: true);
+        public static readonly SoundID C5LongLitri = new SoundID("C5LongLitri", register: true);
+        public static readonly SoundID C6LongLitri = new SoundID("C6LongLitri", register: true);
+        public static readonly SoundID C7LongLitri = new SoundID("C7LongLitri", register: true);
+        public static readonly SoundID C1MediumLitri = new SoundID("C1MediumLitri", register: true);
+        public static readonly SoundID C2MediumLitri = new SoundID("C2MediumLitri", register: true);
+        public static readonly SoundID C3MediumLitri = new SoundID("C3MediumLitri", register: true);
+        public static readonly SoundID C4MediumLitri = new SoundID("C4MediumLitri", register: true);
+        public static readonly SoundID C5MediumLitri = new SoundID("C5MediumLitri", register: true);
+        public static readonly SoundID C6MediumLitri = new SoundID("C6MediumLitri", register: true);
+        public static readonly SoundID C7MediumLitri = new SoundID("C7MediumLitri", register: true);
+        public static readonly SoundID C1ShortLitri = new SoundID("C1ShortLitri", register: true);
+        public static readonly SoundID C2ShortLitri = new SoundID("C2ShortLitri", register: true);
+        public static readonly SoundID C3ShortLitri = new SoundID("C3ShortLitri", register: true);
+        public static readonly SoundID C4ShortLitri = new SoundID("C4ShortLitri", register: true);
+        public static readonly SoundID C5ShortLitri = new SoundID("C5ShortLitri", register: true);
+        public static readonly SoundID C6ShortLitri = new SoundID("C6ShortLitri", register: true);
+        public static readonly SoundID C7ShortLitri = new SoundID("C7ShortLitri", register: true);
+        public static readonly SoundID C1LongBell = new SoundID("C1LongBell", register: true);
+        public static readonly SoundID C2LongBell = new SoundID("C2LongBell", register: true);
+        public static readonly SoundID C3LongBell = new SoundID("C3LongBell", register: true);
+        public static readonly SoundID C4LongBell = new SoundID("C4LongBell", register: true);
+        public static readonly SoundID C5LongBell = new SoundID("C5LongBell", register: true);
+        public static readonly SoundID C6LongBell = new SoundID("C6LongBell", register: true);
+        public static readonly SoundID C7LongBell = new SoundID("C7LongBell", register: true);
+        public static readonly SoundID C1MediumBell = new SoundID("C1MediumBell", register: true);
+        public static readonly SoundID C2MediumBell = new SoundID("C2MediumBell", register: true);
+        public static readonly SoundID C3MediumBell = new SoundID("C3MediumBell", register: true);
+        public static readonly SoundID C4MediumBell = new SoundID("C4MediumBell", register: true);
+        public static readonly SoundID C5MediumBell = new SoundID("C5MediumBell", register: true);
+        public static readonly SoundID C6MediumBell = new SoundID("C6MediumBell", register: true);
+        public static readonly SoundID C7MediumBell = new SoundID("C7MediumBell", register: true);
+        public static readonly SoundID C1ShortBell = new SoundID("C1ShortBell", register: true);
+        public static readonly SoundID C2ShortBell = new SoundID("C2ShortBell", register: true);
+        public static readonly SoundID C3ShortBell = new SoundID("C3ShortBell", register: true);
+        public static readonly SoundID C4ShortBell = new SoundID("C4ShortBell", register: true);
+        public static readonly SoundID C5ShortBell = new SoundID("C5ShortBell", register: true);
+        public static readonly SoundID C6ShortBell = new SoundID("C6ShortBell", register: true);
+        public static readonly SoundID C7ShortBell = new SoundID("C7ShortBell", register: true);
+        public static readonly SoundID C1LongClar = new SoundID("C1LongClar", register: true);
+        public static readonly SoundID C2LongClar = new SoundID("C2LongClar", register: true);
+        public static readonly SoundID C3LongClar = new SoundID("C3LongClar", register: true);
+        public static readonly SoundID C4LongClar = new SoundID("C4LongClar", register: true);
+        public static readonly SoundID C5LongClar = new SoundID("C5LongClar", register: true);
+        public static readonly SoundID C6LongClar = new SoundID("C6LongClar", register: true);
+        public static readonly SoundID C7LongClar = new SoundID("C7LongClar", register: true);
+        public static readonly SoundID C1MediumClar = new SoundID("C1MediumClar", register: true);
+        public static readonly SoundID C2MediumClar = new SoundID("C2MediumClar", register: true);
+        public static readonly SoundID C3MediumClar = new SoundID("C3MediumClar", register: true);
+        public static readonly SoundID C4MediumClar = new SoundID("C4MediumClar", register: true);
+        public static readonly SoundID C5MediumClar = new SoundID("C5MediumClar", register: true);
+        public static readonly SoundID C6MediumClar = new SoundID("C6MediumClar", register: true);
+        public static readonly SoundID C7MediumClar = new SoundID("C7MediumClar", register: true);
+        public static readonly SoundID C1ShortClar = new SoundID("C1ShortClar", register: true);
+        public static readonly SoundID C2ShortClar = new SoundID("C2ShortClar", register: true);
+        public static readonly SoundID C3ShortClar = new SoundID("C3ShortClar", register: true);
+        public static readonly SoundID C4ShortClar = new SoundID("C4ShortClar", register: true);
+        public static readonly SoundID C5ShortClar = new SoundID("C5ShortClar", register: true);
+        public static readonly SoundID C6ShortClar = new SoundID("C6ShortClar", register: true);
+        public static readonly SoundID C7ShortClar = new SoundID("C7ShortClar", register: true);
+        public static readonly SoundID C1LongTrisaw = new SoundID("C1LongTrisaw", register: true);
+        public static readonly SoundID C2LongTrisaw = new SoundID("C2LongTrisaw", register: true);
+        public static readonly SoundID C3LongTrisaw = new SoundID("C3LongTrisaw", register: true);
+        public static readonly SoundID C4LongTrisaw = new SoundID("C4LongTrisaw", register: true);
+        public static readonly SoundID C5LongTrisaw = new SoundID("C5LongTrisaw", register: true);
+        public static readonly SoundID C6LongTrisaw = new SoundID("C6LongTrisaw", register: true);
+        public static readonly SoundID C7LongTrisaw = new SoundID("C7LongTrisaw", register: true);
+        public static readonly SoundID C1MediumTrisaw = new SoundID("C1MediumTrisaw", register: true);
+        public static readonly SoundID C2MediumTrisaw = new SoundID("C2MediumTrisaw", register: true);
+        public static readonly SoundID C3MediumTrisaw = new SoundID("C3MediumTrisaw", register: true);
+        public static readonly SoundID C4MediumTrisaw = new SoundID("C4MediumTrisaw", register: true);
+        public static readonly SoundID C5MediumTrisaw = new SoundID("C5MediumTrisaw", register: true);
+        public static readonly SoundID C6MediumTrisaw = new SoundID("C6MediumTrisaw", register: true);
+        public static readonly SoundID C7MediumTrisaw = new SoundID("C7MediumTrisaw", register: true);
+        public static readonly SoundID C1ShortTrisaw = new SoundID("C1ShortTrisaw", register: true);
+        public static readonly SoundID C2ShortTrisaw = new SoundID("C2ShortTrisaw", register: true);
+        public static readonly SoundID C3ShortTrisaw = new SoundID("C3ShortTrisaw", register: true);
+        public static readonly SoundID C4ShortTrisaw = new SoundID("C4ShortTrisaw", register: true);
+        public static readonly SoundID C5ShortTrisaw = new SoundID("C5ShortTrisaw", register: true);
+        public static readonly SoundID C6ShortTrisaw = new SoundID("C6ShortTrisaw", register: true);
+        public static readonly SoundID C7ShortTrisaw = new SoundID("C7ShortTrisaw", register: true);
 
-
-
+        private static string LogTime() { return ((int)(Time.time * 1000)).ToString(); }
+        public static void Debug(object data, [CallerMemberName] string callerName = "")
+        {
+            UnityEngine.Debug.Log($"{LogTime()}|{callerName}:{data}");
+        }
 
         private void IntroRollMusic_ctor(On.Music.IntroRollMusic.orig_ctor orig, Music.IntroRollMusic self, Music.MusicPlayer musicPlayer)
         {

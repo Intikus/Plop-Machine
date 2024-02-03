@@ -186,7 +186,7 @@ namespace RainMeadow
                 ActiveZone az = activeZonesDict[closestVibe];
                 if (musicPlayer.song.name == az.songName && minDist > az.radius)
                 {
-                    Debug.Log("Meadow Music:  Fading echo song...");
+                    Debug.Log("Meadow Music:  Fading vibe song...");
                     musicPlayer.song.FadeOut(40f);
                     activeZone = null;
                 }
