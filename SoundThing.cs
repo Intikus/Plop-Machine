@@ -111,10 +111,16 @@ namespace SoundThing
 
         float distancetovibeepicentre = 0;
 
-        float intensity = (float)0.5;
+        float intensity = 0.5f;
 
 
-
+        private bool isHUDSound;
+        public static class EnumExt_AudioFilters
+        {
+#pragma warning disable 0649
+            public static RoomSettings.RoomEffect.Type AudioFiltersReverb;
+#pragma warning restore 0649
+        }
 
 
 
@@ -123,6 +129,7 @@ namespace SoundThing
             On.Music.IntroRollMusic.ctor += IntroRollMusic_ctor;
             On.RainWorldGame.Update += RainWorldGame_Update;
         }
+
 
         private string IntTOCKNote(int integer)
         {
@@ -417,17 +424,6 @@ namespace SoundThing
 
             PlayThing(sampleused, mic, speeed);
 
-        }
-
-        private void PlayThing(SoundID Note, VirtualMicrophone virtualMicrophone, float speed)
-        {
-
-            virtualMicrophone.PlaySound(Note, 0f, 0.42f, speed);
-
-            if (RainWorld.ShowLogs)
-            {
-                Debug($"the note that played: {Note} at {speed}");
-            }
         }
 
         private void PushModulation()
@@ -830,6 +826,55 @@ namespace SoundThing
             }
         }
 
+        private void PlayThing(SoundID Note, VirtualMicrophone virtualMicrophone, float speed)
+        {
+
+            //virtualMicrophone.PlaySound(Note, 0f, intensity*0.5f, speed);
+
+            float pan = 0;
+            float vol = intensity * 0.5f;
+            float pitch = speed;
+
+            Debug($"Trying to play a {Note}");
+            try
+            {
+                if (virtualMicrophone.visualize)
+                {
+                    virtualMicrophone.Log(Note);
+                }
+                if (!virtualMicrophone.AllowSound(Note))
+                {
+                    Debug($"Too many sounds playing, denied a {Note}");
+                    //return;
+                }
+                SoundLoader.SoundData soundData = virtualMicrophone.GetSoundData(Note, -1);
+                if (virtualMicrophone.SoundClipReady(soundData))
+                {
+
+                    var thissound = new VirtualMicrophone.DisembodiedSound(virtualMicrophone, soundData, pan, vol, pitch, false, 0);
+                    var reverb = thissound.gameObject.AddComponent<AudioReverbFilter>();
+                    reverb.reverbPreset = AudioReverbPreset.SewerPipe;
+
+                    virtualMicrophone.soundObjects.Add(thissound);
+                }
+                else
+                {
+                    Debug($"Soundclip not ready");
+                    return;
+                }
+
+                if (RainWorld.ShowLogs)
+                {
+                    Debug($"the note that played: {Note} at {speed}");
+                }
+            }
+            catch (Exception e)
+            {
+                Debug($"Log {e}");
+            }
+
+        }
+
         //private void Player_Update(On.Player.orig_Update orig, Player self, bool eu)
         private void RainWorldGame_Update(On.RainWorldGame.orig_Update orig, RainWorldGame self)
         {
@@ -849,10 +894,16 @@ namespace SoundThing
                 CurrentRegion = "sl";
             }
 
-            if (debugtimer % 160 == 00) { mic.PlaySound(C4ShortClar, 0f, intensity*0.5f, 1); }
-            if (debugtimer % 160 == 20) { mic.PlaySound(C4ShortClar, 0f, intensity * 0.5f, (float)Math.Pow(magicnumber, 4)); }
-            if (debugtimer % 160 == 40) { mic.PlaySound(C4ShortClar, 0f, intensity * 0.5f, (float)Math.Pow(magicnumber, 7)); }
-            if (debugtimer % 160 == 60) { mic.PlaySound(C4ShortClar, 0f, intensity * 0.5f, (float)Math.Pow(magicnumber, 11)); }
+            if (debugtimer % 160 == 00) { PlayThing(C4ShortClar, mic, 1); }
+            if (debugtimer % 160 == 20) { PlayThing(C4ShortClar, mic, (float)Math.Pow(magicnumber, 4)); }
+            if (debugtimer % 160 == 40) { PlayThing(C4ShortClar, mic, (float)Math.Pow(magicnumber, 7)); }
+            if (debugtimer % 160 == 60) { PlayThing(C4ShortClar, mic, (float)Math.Pow(magicnumber, 11)); }
+
+
+            //if (debugtimer % 160 == 00) { mic.PlaySound(C4ShortClar, 0f, intensity * 0.5f, 1); }
+            //if (debugtimer % 160 == 20) { mic.PlaySound(C4ShortClar, 0f, intensity * 0.5f, (float)Math.Pow(magicnumber, 4)); }
+            //if (debugtimer % 160 == 40) { mic.PlaySound(C4ShortClar, 0f, intensity * 0.5f, (float)Math.Pow(magicnumber, 7)); }
+            //if (debugtimer % 160 == 60) { mic.PlaySound(C4ShortClar, 0f, intensity * 0.5f, (float)Math.Pow(magicnumber, 11)); }
 
             //PlayEntry(mic);
 
@@ -869,26 +920,27 @@ namespace SoundThing
             //    Debug($"{lel}, {lel2}");
             //    Debug(agora);
             //}
+
             Debug(intensity);
 
             if (Input.GetKey("1") && !yoyo)
             {
                 //agora -= 1;
-                intensity -= 0.1f;
+                ////intensity -= 0.1f;
             }
             yoyo = Input.GetKey("1");
             
             if (Input.GetKey("2") && !yoyo2)
             {
                 //agora += 1;
-                intensity += 0.1f;
+                ////intensity += 0.1f;
             }
             yoyo2 = Input.GetKey("2"); 
             
             if (Input.GetKey("3") && !yoyo3)
             {
                 //agora = 0;
-                intensity = 0f;
+                //intensity = 0f;
             }
             yoyo3 = Input.GetKey("3");
 

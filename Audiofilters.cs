@@ -26,20 +26,17 @@ namespace AudioFilters
     public class AudioFilters : BepInEx.BaseUnityPlugin
     {
         public string author = "Henpemaz";
-        public static AudioFilters instance;
         private bool isHUDSound;
 
         public static class EnumExt_AudioFilters
         {
-#pragma warning disable 0649
+            #pragma warning disable 0649
             public static RoomSettings.RoomEffect.Type AudioFiltersReverb;
-#pragma warning restore 0649
+            #pragma warning restore 0649
         }
 
         public void OnEnable()
         {
-            instance = this;
-
             // add filters
             On.VirtualMicrophone.SoundObject.ctor += SoundObject_ctor;
             On.AmbientSoundPlayer.TryInitiation += AmbientSoundPlayer_TryInitiation;
