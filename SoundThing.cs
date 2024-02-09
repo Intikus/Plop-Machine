@@ -14,6 +14,13 @@ using System.Security.Cryptography;
 using System.Runtime.ExceptionServices;
 using System.IO;
 using System.Runtime.CompilerServices;
+using MonoMod.RuntimeDetour;
+using Newtonsoft.Json.Linq;
+using System.Reflection;
+using System.ComponentModel;
+using System.Text.RegularExpressions;
+using System.Diagnostics.Eventing.Reader;
+using On;
 
 [module: UnverifiableCode]
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
@@ -48,11 +55,19 @@ namespace SoundThing
 
 
 
-        int lel = 0;
+        int lel = 27;
         int lel2 = 0;
+        int lel3 = 0;
+        int lel4 = 0;
         bool yoyo = true;
         bool yoyo2 = true;
         bool yoyo3 = true;
+        bool yoyo4 = true;
+        bool yoyo5 = true;
+        bool yoyo6 = true;
+        bool yoyo7 = true;
+        bool yoyo8 = true;
+        bool yoyo9 = true;
 
         bool EntryRequest = true;
 
@@ -76,11 +91,16 @@ namespace SoundThing
 
         bool inwaitmode = false;
         int riffstopwatch = 0;
-        string UpcomingEntry = "Yooo";
+        string UpcomingEntry = "Dtesthaha";         //important to set a first one
         string[] theline;
         int riffindex;
         int rifflength;
         string riffcurrentvar;
+        bool islooping;
+        int tilestasked;
+        int loopcountdown;
+        float riffd;
+        int upcomingdelay;
 
 
         string sampleinfo = "hehe";
@@ -107,12 +127,33 @@ namespace SoundThing
         int agora = 1;
         float phob;
 
+        string teststring = "hehe";
         string CurrentRegion;
 
         float distancetovibeepicentre = 0;
 
-        float intensity = 0.5f;
+        float intensity = 1.0f;
+        AudioReverbPreset[] thepresets = [AudioReverbPreset.Off, AudioReverbPreset.Generic, AudioReverbPreset.PaddedCell, AudioReverbPreset.Room, AudioReverbPreset.Bathroom, AudioReverbPreset.Livingroom, AudioReverbPreset.Stoneroom, AudioReverbPreset.Auditorium, AudioReverbPreset.Concerthall, AudioReverbPreset.Cave, AudioReverbPreset.Arena, AudioReverbPreset.Hangar, AudioReverbPreset.CarpetedHallway, AudioReverbPreset.Hallway, AudioReverbPreset.StoneCorridor, AudioReverbPreset.Alley, AudioReverbPreset.Forest, AudioReverbPreset.City, AudioReverbPreset.Mountains, AudioReverbPreset.Quarry, AudioReverbPreset.Plain, AudioReverbPreset.ParkingLot, AudioReverbPreset.SewerPipe, AudioReverbPreset.Underwater, AudioReverbPreset.Drugged, AudioReverbPreset.Dizzy, AudioReverbPreset.Psychotic, AudioReverbPreset.User];
+        float IntikusdecayHFRatio = 0.5f;
+        float IntikusdecayTime = 1f;
+        float Intikusdensity = 1f;
+        float Intikusdiffusion = 1f;
+        float IntikusdryLevel = 1f;
+        float IntikushfReference = 1f;
+        float IntikuslfReference = 1f;
+        float IntikusreflectionsDelay = 1f;
+        float IntikusreflectionsLevel = 1f;
+        float IntikusreverbDelay = 1f;
+        float IntikusreverbLevel = 1f;
+        float IntikusreverbPreset = 1f;
+        float Intikusroom = 1f;
+        float IntikusroomHF = 1f;
+        float IntikusroomLF = 1f;
+        float[] RangeAdjs = [0.1f, 0.2f, 0.5f, 1f, 2f, 5f, 10f, 50f, 100f, 500f, 1000f, 2000f, 5000f];
+        //float[] ack = [IntikusdecayHFRatio, IntikusdecayTime, Intikusdensity, Intikusdiffusion, IntikusdryLevel, IntikushfReference, IntikuslfReference, IntikusreflectionsDelay, IntikusreflectionsLevel, IntikusreverbDelay, IntikusreverbLevel, IntikusreverbPreset, Intikusroom, IntikusroomHF, IntikusroomLF]
 
+        float[] revbvalues = [0.5f, 1.0f, 100.0f, 100.0f, 0f, 5000.0f, 250.0f, 0.0f, -10000f, 0.04f, 0.0f, 1f, 0.0f, 0.0f, 0.0f];
+        string[] revbnames = ["decayHFRatio: 0.1 - 2.0", "decayTime (s): 0.1 - 20.0", "density%: 0.0 - 100.0", "diffusion%: 0.0 - 100.0", "dryLevel(md): -10000.0 - 0.0", "hfReference(Hz): 1000.0 - 20000.0", "lfReference(Hz): 20.0 - 1000.0", "reflectionsDelay(mB): -10000.0 - 2000.0", "reflectionsLevel(mB): -10000.0 - 1000.0", "reverbDelay(s): 0.0 - 0.1", "reverbLevel(mB): -10000.0 - 2000.0", "reverbPreset: what", "room(mb): -10000.0 - 0.0", "roomHF(mB): -10000.0 - 0.0", "roomLF(mB): -10000.0 - 0.0"];
 
         private bool isHUDSound;
         public static class EnumExt_AudioFilters
@@ -122,13 +163,56 @@ namespace SoundThing
 #pragma warning restore 0649
         }
 
-
-
         public void OnEnable()
         {
             On.Music.IntroRollMusic.ctor += IntroRollMusic_ctor;
             On.RainWorldGame.Update += RainWorldGame_Update;
+
+            On.AmbientSoundPlayer.TryInitiation += AmbientSoundPlayer_TryInitiation;
+            On.PlayerGraphics.DrawSprites += hehedrawsprites;
+
         }
+
+
+        public void hehedrawsprites(On.PlayerGraphics.orig_DrawSprites orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
+        {
+            //orig(self, sLeaser, timeStacker, rCam, timeStacker, camPos);
+            orig(self, sLeaser, rCam, timeStacker, camPos);
+            Color camocoloryo = rCam.PixelColorAtCoordinate(self.player.mainBodyChunk.pos);
+            //Debug($"So the color at here issss {color}");
+            //Color mycolor = sLeaser[self.startSprite].color;
+            foreach (var sprite in sLeaser.sprites)
+            {
+                sprite.color = camocoloryo;
+            }
+        }
+
+
+        /*
+            //On Initialize()
+            IDetour hookTestMethodA = new Hook(
+                    typeof(Class Of Property).GetProperty("property without get_", BindingFlags.Instance | BindingFlags.Public).GetGetMethod(),
+                    typeof(Class where hook is located).GetMethod("name of the methodHK", BindingFlags.Static | BindingFlags.Public)
+                );
+            //On Static hook class
+                public delegate Type_of_property orig_nameOfProperty(Class self);
+                
+                public static Type_of_property get_PropertyHK(orig_nameOfProperty orig_nameOfProperty, Class self)
+                {
+                return orig_nameOfProperty(self);
+                }
+        */
+
+        
+
+        //public delegate int orig_lengthSamples(int self);
+        //
+        //    public static int get_CreateHK(orig_lengthSamples orig_lengthSamples, AudioClip self)
+        //    {
+        //        
+        //        return orig_lengthSamples(self);
+        //    }
+
 
 
         private string IntTOCKNote(int integer)
@@ -301,14 +385,8 @@ namespace SoundThing
             if (PointPos == -1) { st1 += ".00000"; }
             else
             {
-                //Debug("A");
                 string lettersafterpoint = st1.Substring(PointPos);
-                //Debug("B");
                 int lettersamount = lettersafterpoint.Length - 1;
-
-                //Debug("C");
-                //Debug(lettersamount);
-
 
                 if (lettersamount < 5)
                 {
@@ -346,16 +424,18 @@ namespace SoundThing
             int oct = int.Parse(parts[1]);
             int ind = int.Parse(parts[2]);
 
-            Debug($"So the string is {s}, which counts as {parts.Length} amounts of parts. {slib}, {oct}, {ind}");
+            //Debug($"So the string is {s}, which counts as {parts.Length} amounts of parts. {slib}, {oct}, {ind}");
 
             SoundID[] slopb = SampDict(slib);
 
-            Debug($"and it picked a sample through the SampDict, called {slopb}");  
-            Debug($"Samples picked: [{string.Join(", ", slopb.ToList())}]");
+            //Debug($"and it picked a sample through the SampDict, called {slopb}");  
+            //Debug($"Samples picked: [{string.Join(", ", slopb.ToList())}]");
 
+            //SoundID sampleused = slopb[oct]; //one octave higher
             SoundID sampleused = slopb[oct - 1];
+            //Debug("Octave integer " + oct + ". sampleused: " + sampleused);
 
-            Debug($"It uses the sample {sampleused}");
+            //Debug($"It uses the sample {sampleused}");
 
             string NoteNow = IntTOCKNote(ind);
             int transposition = 0;
@@ -443,11 +523,16 @@ namespace SoundThing
             { "Triad", "Chord", "L-4-1 L-4-3 L-4-5,L-3-1 L-3-3 L-2-5 L-2-6 L-2-4", "Triad,40,50,S-4-6 S-4-5,0|Triad,40,50,S-4-3,0|Balaboo,40,50,S-4-3 S-3-4,0|Finga,60,90,S-4-5,0"},
             { "Balaboo", "Chord", "L-4-2 L-4-3 L-4-6,L-3-2 L-2-6 L-2-5", "Triad,40,60,0,0|Routsi,40,60,S-4-5,0"},
             { "Finga", "Chord", "L-4-3 L-4-5 L-4-7,L-3-4 L-3-5 L-3-6 L-2-1", "Triad,40,50,0,0|Balaboo,100,120,S-5-3 S-4-7 S-4-5,+1"},
-            { "Routsi", "Chord", "L-4-3 L-4-5 L-4-6,L-2-5 L-2-6 L-3-1 L-3-3", "Balaboo,30,60,S-4-5 S-5-1,0|Balaboo,30,60,S-5-1,+2"},
+            { "Routsi", "Chord", "L-4-3 L-4-5 L-4-6,L-2-5 L-2-6 L-3-1 L-3-3", "Balaboo,30,60,S-4-5 S-5-1,0|Balaboo,30,60,S-5-1,+2"}, //pretty nice
             { "Grast", "Chord", "L-4-4 L-4-5 L-5-1,L-3-2 L-3-4 L-3-5", "Finga,45,70,S-5-3 S-4-5,0|Grast,30,60,S-5-1,-2|Rhast,20,30,S-4-6,0"},
             { "Rhast", "Chord", "L-4-1 L-4-4 L-4-6,L-3-4 L-3-2 L-3-1 L-2-6 L-2-4", "Balaboo,40,59,S-4-5,0|Rhast,40,50,S-4-7,+1|Triad,50,60,S-5-1,0" },
-            { "Yooo", "Riff", "S-4-1,S-4-2,S-4-5 S-4-7,25,S-4-5 S-4-7,S-4-5 S-4-7,1,S-5-3 S-4-4,S-5-7 S-5-3,21,!,30,S-4-3,S-4-7,S-5-3", "Triad" }
-            //{ "Firstsample", "Entry", "Lol,2,200", "Triad" }
+            { "Yooo", "Riff", "S-4-1,S-4-2,S-4-5 S-4-7,25,S-4-5 S-4-7,S-4-5 S-4-7,1,S-5-3 S-4-4,S-5-7 S-5-3,21,!,30,S-4-3,S-4-7,S-5-3", "Triad" },
+            { "Hellothere", "Riff", "M-5-5,50,M-5-3,30,M-5-2,2,M-4-6,8,M-4-2,50,6loop4,5,M-3-7,30,L-3-3,60,!", "Heyo" },
+            { "Heskotherelol", "Riff", "d=30,M-3-4,d/1.05,M-3-6,d/1.05,M-4-3,d/1.05,6loop10,M-4-4,d/1.05,M-4-6,d/1.05,M-5-3,d/1.05,6loop10,M-5-3,d*1.05,M-4-6,d*1.05,M-4-4,d*1.05,M-4-1,d*1.05,M-3-5,d*1.05,10loop11,10,L-3-3,60,!", "Heyolol" },
+            { "Dtesthaha", "Riff", "d=190,D-4-1,d/1.1,D-4-4,d/1.1,D-4-5,d/1.1,6loop25,D-7-1,90,M-5-5,!", "Heyolol" },
+            { "Heyo", "Chord", "L-6-3,L-3-2 L-2-3", "Hellothere,90,130,0,0" },
+            { "Heyolol", "Chord", "L-6-3 L-5-4 L-5-1,L-3-2 L-2-3", "Heskotherelol,90,130,0,0|Dtesthaha,60,100,0,0" }
+            //{ "Firstsample", "Sample", "Lol,2,200", "Triad" }
         };
 
         private void PlayEntry(VirtualMicrophone mic)
@@ -497,6 +582,7 @@ namespace SoundThing
             if (EntryRequest == true && entrychord == true)
             {
                 //playing a chord
+                //Debug("Starts the chord: " + UpcomingEntry + " " + chordnotes + "    and leadup: " + chordleadups);
                 PushModulation();
                 EntryRequest = false;
                 entrychord = false;
@@ -635,8 +721,6 @@ namespace SoundThing
                 }
             }
 
-
-
             if (EntryRequest == true && entryriff == true)
             {
                 EntryRequest = false;
@@ -654,8 +738,8 @@ namespace SoundThing
             {
                 if (inwaitmode == true)
                 {
-                    riffstopwatch--;
-                    if (riffstopwatch == 0)
+                    riffstopwatch--;//just to double check but 0 is the same as 1, you're delaying it whatever
+                    if (riffstopwatch <= 0)
                     {
                         inwaitmode = false;
                     }
@@ -664,17 +748,26 @@ namespace SoundThing
                 {
                     if (riffindex < rifflength)
                     {
-                        riffcurrentvar = theline[riffindex];
-                        string[] splitvar = riffcurrentvar.Split(' ');
+                        //if (pushingindex) { riffindex = queuedindex; pushingindex = false; }
+                        //Debug("Started they thing");
                         //Debug("hullo");
                         //randomise it, if it's an array, then also remove extras if else
-
                         //Debug($"{riffindex}, {rifflength}, {riffcurrentvar}, {theline}");
                         //Debug(splitvar[0]);
                         //Debug(splitvar.Length);
+                        riffcurrentvar = theline[riffindex];
+                        Debug("Currently treating "+riffindex+". With currentvar: "+riffcurrentvar);
+                        string[] splitvar = riffcurrentvar.Split(' ');
                         int whichofthese = RXRandom.Range(0, splitvar.Length);
                         string treatedvar = splitvar[whichofthese];
 
+                        //start of Parser
+
+
+                        //if (Regex.IsMatch(teststring, "a"))
+                        //{
+                        //    Debug("TheredobeanAinit");
+                        //}
 
                         //Debug("hello");
                         //testing if it's just a number
@@ -695,23 +788,182 @@ namespace SoundThing
                             riffstopwatch = intivaryo;
                             inwaitmode = true;
                         }
+
+                        
+
+
                         else
                         {
-                            switch (treatedvar)
+                            Debug(treatedvar);
+                            if (Regex.IsMatch(treatedvar, "loop"))
                             {
-                                case "!":
-                                    EntryRequest = true;
-                                    //Debug(riffleadups);
-                                    string[] leadups = riffleadups.Split('|');
-                                    int butwhatnowboss = RXRandom.Range(0, leadups.Length);
-                                    string leadup = leadups[butwhatnowboss];
-                                    UpcomingEntry = leadup;
-                                    //Debug(riffleadups + " " + leadups + " "+ butwhatnowboss + " " + leadup + " " + UpcomingEntry);
-                                    break;
-                                default: //will assume its a note for now
-                                    treatedvar = treatedvar.ToString();
-                                    IntiN(treatedvar, mic);
-                                    break;
+                                Debug("Matched it as a loop");
+                                if (islooping)
+                                {
+                                    loopcountdown--;
+                                    if (loopcountdown > 0)
+                                    {
+                                        //queuedindex = riffindex - tilestasked;
+                                        //pushingindex = true;
+                                        riffindex -= tilestasked + 1;
+                                        Debug($"Went backwards {tilestasked} to {riffindex}");
+                                    }
+                                    if (loopcountdown <= 0)
+                                    {
+                                        islooping = false;
+                                    }
+                                    Debug("Done with islooping, looping countdown is " + loopcountdown);
+                                }
+                                //finish the timeloop by not doin anythin
+                                else
+                                {
+                                    //start the timeloop of the things
+                                    string[] Supdude = Regex.Split(treatedvar, "loop");
+                                    
+                                    tilestasked = int.Parse(Supdude[0]);
+                                    loopcountdown = int.Parse(Supdude[1]);
+                                    islooping = true;
+                                    riffindex -= tilestasked + 1; //the extra 1 is to compensate for riffindex being ++;'d at the end, it goes 5 backwards FROM this one, 1 will be 1 back
+                                    Debug($"He thinks he's {riffindex}, {tilestasked}");
+                                }
+                            }
+                            if (Regex.IsMatch(treatedvar, "d"))
+                            {
+                                if (treatedvar.IndexOf('=') != -1)
+                                {
+                                    riffd = float.Parse(treatedvar.Substring(2));
+                                }
+                                if (treatedvar.IndexOf('+') != -1)
+                                {
+                                    riffd += float.Parse(treatedvar.Substring(2));
+                                }
+                                if (treatedvar.IndexOf('-') != -1)
+                                {
+                                    riffd -= float.Parse(treatedvar.Substring(2));
+                                    if (riffd < 0)
+                                        riffd = 0;
+                                }
+                                if (treatedvar.IndexOf('*') != -1)
+                                {
+                                    //hehehehe hellothere fuck uuu >:))))))
+                                    riffd *= float.Parse(treatedvar.Substring(2));
+                                }
+                                if (treatedvar.IndexOf('/') != -1)
+                                {
+                                    if (riffd != 0 || float.Parse(treatedvar.Substring(2)) != 0.0f)
+                                        riffd /= float.Parse(treatedvar.Substring(2));
+                                }
+                                
+                                riffstopwatch = (int)Math.Round((double)riffd, 0); ;
+                                Debug($"Matched it as a Delta, waiting for {riffd}, {riffstopwatch}");
+                                inwaitmode = true;
+                            }
+
+                            if (Regex.IsMatch(treatedvar, "!"))
+                            {
+                                Debug("Matched it as a chorder, the leadups are");
+                                EntryRequest = true;
+                                //Debug(riffleadups);
+                                string[] leadups = riffleadups.Split('|');
+                                Debug("Splits it up");
+                                for (int i = 0; i < leadups.Length - 1; i++)
+                                {
+                                    Debug(leadups[i]);
+                                }
+                                int butwhatnowboss = RXRandom.Range(0, leadups.Length);
+                                Debug("Picks a random one");
+                                string leadup = leadups[butwhatnowboss];
+                                Debug("Picks " + leadup);
+                                UpcomingEntry = leadup;
+                                //Debug(riffleadups + " " + leadups + " "+ butwhatnowboss + " " + leadup + " " + UpcomingEntry);
+                            }
+                            if (Regex.IsMatch(treatedvar, "L-") || Regex.IsMatch(treatedvar, "M-") || Regex.IsMatch(treatedvar, "S-"))
+                            {
+                                Debug("Matched it as a noter");
+                                //will assume its a note for now
+                                treatedvar = treatedvar.ToString();
+                                IntiN(treatedvar, mic);
+                            }
+                            if (Regex.IsMatch(treatedvar, "D-"))
+                            {
+                                Debug("Matched it as a Dynamic noter");
+                                var riffnextvar = theline[riffindex+1];
+                                Debug("Predicting future index to be " + riffindex + "+1. With thenextvar being: " + riffnextvar);
+                                string[] splitnextvar = riffnextvar.Split(' ');
+                                int whichofthesenexts = RXRandom.Range(0, splitnextvar.Length);
+                                string treatednextvar = splitnextvar[whichofthesenexts];
+
+                                bool umnextsanumber = true;
+                                try
+                                {
+                                    //Debug("Testing parsing it" + umnextsanumber);
+                                    int intivaryo = int.Parse(treatednextvar);
+                                    
+                                }
+                                catch
+                                {
+                                    //ok i guess it's not a number :steamsad:
+                                    Debug("it didn't parse");
+                                    umnextsanumber = false;
+                                }
+
+                                if (umnextsanumber == true)
+                                {
+                                    int intinextvaryo = int.Parse(treatednextvar);
+                                    upcomingdelay = intinextvaryo;
+                                }
+                                else
+                                {
+                                    if (Regex.IsMatch(treatednextvar, "d"))
+                                    {
+                                        float dummyriffd = riffd;
+                                        if (treatedvar.IndexOf('=') != -1)
+                                        {
+                                            dummyriffd = float.Parse(treatednextvar.Substring(2));
+                                        }
+                                        if (treatedvar.IndexOf('+') != -1)
+                                        {
+                                            dummyriffd += float.Parse(treatednextvar.Substring(2));
+                                        }
+                                        if (treatedvar.IndexOf('-') != -1)
+                                        {
+                                            dummyriffd -= float.Parse(treatednextvar.Substring(2));
+                                            if (riffd < 0)
+                                                riffd = 0;
+                                        }
+                                        if (treatedvar.IndexOf('*') != -1)
+                                        {
+                                            //hehehehe hellothere fuck uuu >:))))))
+                                            dummyriffd *= float.Parse(treatednextvar.Substring(2));
+                                        }
+                                        if (treatedvar.IndexOf('/') != -1)
+                                        {
+                                            if (dummyriffd != 0 || float.Parse(treatednextvar.Substring(2)) != 0.0f)
+                                                dummyriffd /= float.Parse(treatednextvar.Substring(2));
+                                        }
+
+                                        upcomingdelay = (int)Math.Round((double)dummyriffd, 0); ;
+                                        Debug($"Matched it as a Delta, waiting for {riffd}, {riffstopwatch}");
+                                    }
+                                }
+                                treatedvar = treatedvar.ToString().Substring(1);
+
+                                int currentsounds = mic.soundObjects.Count;
+                                Debug("I have calculated upcomingdelay to be " + upcomingdelay +" and the amount of currently to be " + currentsounds);
+                                if ((upcomingdelay < 3)||currentsounds>22)
+                                {
+                                    treatedvar = "S" + treatedvar;
+                                }
+                                else if (((upcomingdelay >= 3) && (upcomingdelay < 75))||currentsounds>17)
+                                {
+                                    treatedvar = "M" + treatedvar;
+                                }
+                                else //(upcomingdelay >= 100)
+                                {
+                                    treatedvar = "L" + treatedvar;
+                                }
+                                //Debug(treatedvar);
+                                IntiN(treatedvar, mic);
                             }
                         }
                         //Debug("HEY THIS ONE DOES THE THING IT*S COOL");
@@ -826,6 +1078,11 @@ namespace SoundThing
             }
         }
 
+        private void AmbientSoundPlayer_TryInitiation(On.AmbientSoundPlayer.orig_TryInitiation orig, AmbientSoundPlayer self)
+        {
+            //Debug("fuckoff");
+        }
+
         private void PlayThing(SoundID Note, VirtualMicrophone virtualMicrophone, float speed)
         {
 
@@ -835,25 +1092,58 @@ namespace SoundThing
             float vol = intensity * 0.5f;
             float pitch = speed;
 
-            Debug($"Trying to play a {Note}");
+            //Debug($"Trying to play a {Note}");
             try
             {
                 if (virtualMicrophone.visualize)
                 {
                     virtualMicrophone.Log(Note);
                 }
+
                 if (!virtualMicrophone.AllowSound(Note))
                 {
-                    Debug($"Too many sounds playing, denied a {Note}");
-                    //return;
+                    Debug($"Too many sounds playing, denying a {Note}");
+                    return;
                 }
                 SoundLoader.SoundData soundData = virtualMicrophone.GetSoundData(Note, -1);
                 if (virtualMicrophone.SoundClipReady(soundData))
                 {
 
                     var thissound = new VirtualMicrophone.DisembodiedSound(virtualMicrophone, soundData, pan, vol, pitch, false, 0);
+
+                    /*
                     var reverb = thissound.gameObject.AddComponent<AudioReverbFilter>();
-                    reverb.reverbPreset = AudioReverbPreset.SewerPipe;
+                    reverb.reverbPreset = thepresets[lel];
+
+
+                    //reverb.room             = 10000*((float)Math.Pow(intensity, 0.75)-1);
+                    //reverb.reflectionsLevel = 10000*((float)Math.Pow(intensity, 0.75)-1);
+                    //reverb.dryLevel         = 10000*((float)Math.Pow((-intensity+1.0), 0.75)-1);
+                    
+                    reverb.decayHFRatio         = revbvalues[0];
+                    reverb.decayTime            = revbvalues[1];
+                    reverb.density              = revbvalues[2];
+                    reverb.diffusion            = revbvalues[3];
+                    reverb.dryLevel             = revbvalues[4];
+                    reverb.hfReference          = revbvalues[5];
+                    reverb.lfReference          = revbvalues[6];
+                    reverb.reflectionsDelay     = revbvalues[7];
+                    reverb.reflectionsLevel     = revbvalues[8];
+                    reverb.reverbDelay          = revbvalues[9];
+                    reverb.reverbLevel          = revbvalues[10];
+                    reverb.reverbPreset         = AudioReverbPreset.User;
+                    reverb.room                 = revbvalues[12];
+                    reverb.roomHF               = revbvalues[13];
+                    reverb.roomLF               = revbvalues[14];
+                    */
+
+
+                    //Debug(10000*((float)Math.Pow(intensity, 0.75)-1));
+                    //Debug(10000*((float)Math.Pow((-intensity+1.0), 0.75)-1));
+
+
+                    //var delay = thissound.gameObject.AddComponent<AudioEchoFilter>();
+
 
                     virtualMicrophone.soundObjects.Add(thissound);
                 }
@@ -865,7 +1155,7 @@ namespace SoundThing
 
                 if (RainWorld.ShowLogs)
                 {
-                    Debug($"the note that played: {Note} at {speed}");
+                    //Debug($"the note that played: {Note} at {speed}");
                 }
             }
             catch (Exception e)
@@ -888,30 +1178,92 @@ namespace SoundThing
 
 
 
+            /*
+            //On Initialize()
+            IDetour hookTestMethodA = new Hook(
+                    typeof(Class Of Property).GetProperty("property without get_", BindingFlags.Instance | BindingFlags.Public).GetGetMethod(),
+                    typeof(Class where hook is located).GetMethod("name of the methodHK", BindingFlags.Static | BindingFlags.Public)
+                );
+            //On Static hook class
+                public delegate Type_of_property orig_nameOfProperty(Class self);
+                
+                public static Type_of_property get_PropertyHK(orig_nameOfProperty orig_nameOfProperty, Class self)
+                {
+                return orig_nameOfProperty(self);
+                }
+            */
+
+
+            //if (Regex.IsMatch(teststring, "a"))
+            //{
+            //    Debug("TheredobeanAinit");
+            //}
+            //if (Regex.IsMatch(teststring, "e"))
+            //{
+            //    Debug("TheredobeanEinit");
+            //}
+
+
             //Debug($"CurrentRegion is: {CurrentRegion}");
             if (CurrentRegion == null)
             {
                 CurrentRegion = "sl";
             }
 
-            if (debugtimer % 160 == 00) { PlayThing(C4ShortClar, mic, 1); }
-            if (debugtimer % 160 == 20) { PlayThing(C4ShortClar, mic, (float)Math.Pow(magicnumber, 4)); }
-            if (debugtimer % 160 == 40) { PlayThing(C4ShortClar, mic, (float)Math.Pow(magicnumber, 7)); }
-            if (debugtimer % 160 == 60) { PlayThing(C4ShortClar, mic, (float)Math.Pow(magicnumber, 11)); }
+
+            //string heheaha = "1.5";
+            //float hahaehe = float.Parse(heheaha);
+            //if (3f * hahaehe ==  4.5f)
+            //{
+            //    Debug("Yooooooooo");
+            //}
 
 
+            //if (debugtimer % 160 == 00) { PlayThing(TriangleC4, mic, 1); }
+            //if (debugtimer % 160 == 20) { PlayThing(TriangleC4, mic, (float)Math.Pow(magicnumber, 4)); }
+            //if (debugtimer % 160 == 40) { PlayThing(TriangleC4, mic, (float)Math.Pow(magicnumber, 7)); }
+            //if (debugtimer % 160 == 60) { PlayThing(TriangleC4, mic, (float)Math.Pow(magicnumber, 11)); }
+
+            /*
+            float fvalue = float.Parse(treatedvar.Substring(2));
+            float dvalue = riffd;
+            float avalue = dvalue / fvalue;
+            string st1 = avalue.ToString();
+            int PointPos = st1.IndexOf('.');
+            if (PointPos == -1) { st1 += ".00000"; }
+            else
+            {
+                string lettersafterpoint = st1.Substring(PointPos);
+                int lettersamount = lettersafterpoint.Length - 1;
+                if (lettersamount < 5)
+                {
+                    if (lettersamount == 4) { st1 += "0"; }
+                    else if (lettersamount == 3) { st1 += "00"; }
+                    else if (lettersamount == 2) { st1 += "000"; }
+                    else if (lettersamount == 1) { st1 += "0000"; }
+                    else if (lettersamount == 0) { Debug("what"); st1 += "00000"; }
+                }
+            }
+            string[] parts = st1.Split('.');
+            int former = int.Parse(parts[0]);
+            string latter = parts[1].Substring(0, 5);
+            int latterint = int.Parse(latter);
+            int dicedint = RXRandom.Range(0, 100000);
+            if (latterint > dicedint) { former++; }
+            riffd = former;
+            */
+
+
+            //if (lol)
+            //{
             //if (debugtimer % 160 == 00) { mic.PlaySound(C4ShortClar, 0f, intensity * 0.5f, 1); }
             //if (debugtimer % 160 == 20) { mic.PlaySound(C4ShortClar, 0f, intensity * 0.5f, (float)Math.Pow(magicnumber, 4)); }
             //if (debugtimer % 160 == 40) { mic.PlaySound(C4ShortClar, 0f, intensity * 0.5f, (float)Math.Pow(magicnumber, 7)); }
             //if (debugtimer % 160 == 60) { mic.PlaySound(C4ShortClar, 0f, intensity * 0.5f, (float)Math.Pow(magicnumber, 11)); }
 
-            //PlayEntry(mic);
+            PlayEntry(mic);
 
             //a live variable is one that must be updated (((((Life advice))))
-
-
-
-
 
             //if (RainWorld.ShowLogs)
             //{
@@ -920,30 +1272,96 @@ namespace SoundThing
             //    Debug($"{lel}, {lel2}");
             //    Debug(agora);
             //}
+            //}
 
-            Debug(intensity);
-
+            
+            yoyo = Input.GetKey("1");
             if (Input.GetKey("1") && !yoyo)
             {
                 //agora -= 1;
-                ////intensity -= 0.1f;
+                lel++;
+                if (lel > thepresets.Length) { lel = 0; }
+                Debug("Reverb selected: " + thepresets[lel]);
             }
-            yoyo = Input.GetKey("1");
-            
+
+            yoyo2 = Input.GetKey("2");
             if (Input.GetKey("2") && !yoyo2)
             {
                 //agora += 1;
-                ////intensity += 0.1f;
+                lel--;
+                if (lel < 0) { lel = thepresets.Length; }
+                Debug("Reverb selected: " + thepresets[lel]);
             }
-            yoyo2 = Input.GetKey("2"); 
-            
-            if (Input.GetKey("3") && !yoyo3)
-            {
-                //agora = 0;
-                //intensity = 0f;
-            }
-            yoyo3 = Input.GetKey("3");
 
+            if (Input.GetKey("5") && !yoyo3)
+            {
+                revbvalues[lel2] = revbvalues[lel2] + RangeAdjs[lel3];
+                Debug($"Currently: {revbvalues[lel2]}");
+            }
+            yoyo3 = Input.GetKey("5");
+            if (Input.GetKey("6") && !yoyo4)
+            {
+                //] RangeAdjs
+                if (lel3 == thepresets.Length-1) { lel3 = 0; }
+                else
+                {
+                    lel3++;
+                }
+                Debug(RangeAdjs[lel3]);
+                //  revbvalues
+                //  revbnames  this one switches the amount of shit
+            }
+            yoyo4 = Input.GetKey("6");
+            if (Input.GetKey("7") && !yoyo5)
+            {
+                if (lel2 == thepresets.Length-1) { lel2 = 0; }
+                else
+                {
+                    lel2++;
+                }
+                Debug(revbnames[lel2]);
+                Debug($"Currently: {revbvalues[lel2]}");
+                //switches them around, this one to the right as lel3
+            }
+            yoyo5 = Input.GetKey("7");
+            if (Input.GetKey("t") && !yoyo6)
+            {
+                revbvalues[lel2] = revbvalues[lel2] - RangeAdjs[lel3];
+                Debug($"Currently: {revbvalues[lel2]}");
+            }
+            yoyo6 = Input.GetKey("t");
+            if (Input.GetKey("y") && !yoyo7)
+            {
+                if (lel3 == 0) { lel3 = thepresets.Length-1; }
+                else
+                {
+                    lel3--;
+                }
+                Debug($"Adjusts by: {RangeAdjs[lel3]}");
+            }
+            yoyo7 = Input.GetKey("y");
+            if (Input.GetKey("u") && !yoyo8)
+            {
+                if (lel2 == 0) { lel2 = thepresets.Length - 1; }
+                else
+                {
+                    lel2--;
+                }
+                Debug(revbnames[lel2]);
+                Debug($"Currently: {revbvalues[lel2]}");
+            }
+            yoyo8 = Input.GetKey("u"); 
+            if (Input.GetKey("p") && !yoyo9)
+            {
+                Debug("This preset's values are");
+                for (int i = 0; i < thepresets.Length-1; i++)
+                {
+                    Debug(revbnames[i] + " " + revbvalues[i]);
+                }
+            }
+            yoyo9 = Input.GetKey("p");
+            
+            //Debug($"{RangeAdjs}, {revbnames.Length}, + {revbnames.Length}");
         }
 
 
@@ -1100,25 +1518,6 @@ namespace SoundThing
             {
                 self.musicPlayer.manager.menuMic.PlaySound(SoundThing.HelloC);
             }
-
-
         }
-
-
-
-        /*
-        int[] xarr = new int[2];
-
-        Dictionary<int, string> DOW = new();
-
-        DOW[5] = "Friday";
-        Debug.Log(DOW[5]);
-
-        if (DOW.TryGetValue(4, out var Result))
-        {
-            Debug.Log(Result);
-        }
-        */
-
     }
 }
