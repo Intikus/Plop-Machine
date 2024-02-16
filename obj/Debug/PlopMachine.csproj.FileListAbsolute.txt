@@ -1,0 +1,8 @@
+C:\Users\Intikus\Code\SoundThing\bin\Debug\SoundThing.dll
+C:\Users\Intikus\Code\SoundThing\bin\Debug\SoundThing.pdb
+C:\Users\Intikus\Code\SoundThing\bin\Debug\UnityEngine.AudioModule.dll
+C:\Users\Intikus\Code\SoundThing\obj\Debug\PlopMachine.csproj.AssemblyReference.cache
+C:\Users\Intikus\Code\SoundThing\obj\Debug\PlopMachine.csproj.CoreCompileInputs.cache
+C:\Users\Intikus\Code\SoundThing\obj\Debug\PlopMachine.csproj.CopyComplete
+C:\Users\Intikus\Code\SoundThing\obj\Debug\SoundThing.dll
+C:\Users\Intikus\Code\SoundThing\obj\Debug\SoundThing.pdb

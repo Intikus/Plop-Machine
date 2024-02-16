@@ -1,34 +1,19 @@
 ﻿using BepInEx;
 using System;
 using System.Collections.Generic;
-using System.Linq;
 using System.Security.Permissions;
 using System.Security;
-using System.Text;
-using System.Threading.Tasks;
-using System.Data.SqlClient;
 using UnityEngine;
-using System.Globalization;
-using System.Collections;
-using System.Security.Cryptography;
-using System.Runtime.ExceptionServices;
 using System.IO;
 using System.Runtime.CompilerServices;
-using MonoMod.RuntimeDetour;
-using Newtonsoft.Json.Linq;
-using System.Reflection;
-using System.ComponentModel;
-using System.Text.RegularExpressions;
-using System.Diagnostics.Eventing.Reader;
-using On;
 
 [module: UnverifiableCode]
 [assembly: SecurityPermission(SecurityAction.RequestMinimum, SkipVerification = true)]
 
-namespace SoundThing
+namespace PlopMachine
 {
-    [BepInPlugin("Intikus.soundthing", "SoundThing", "0.0.1")]
-    public class SoundThing : BaseUnityPlugin
+    [BepInPlugin("Intikus.plopmachine", "PlopMachine", "0.0.1")]
+    public class PlopMachine : BaseUnityPlugin
     {
 
         readonly float magicnumber = 1.0594630776202568303519954093385f;
@@ -91,7 +76,7 @@ namespace SoundThing
 
         bool inwaitmode = false;
         int riffstopwatch = 0;
-        string UpcomingEntry = "Dtesthaha";         //important to set a first one
+        string UpcomingEntry = "Triad";         //important to set a first one
         string[] theline;
         int riffindex;
         int rifflength;
@@ -171,8 +156,101 @@ namespace SoundThing
             On.AmbientSoundPlayer.TryInitiation += AmbientSoundPlayer_TryInitiation;
             On.PlayerGraphics.DrawSprites += hehedrawsprites;
 
+            On.RainWorldGame.ctor += RainWorldGame_ctor;
         }
 
+        bool fileshavebeenchecked = false;
+        string[][] ChordInfos;
+        //{
+            // hellothere thinks making files are a cool idea (for the things (the mod)) (((instead of having htem all in the dll (this)))
+        //};
+        static readonly Dictionary<string, VibeZone[]> vibeZonesDict = new();
+        struct VibeZone
+        {
+            public VibeZone(string room, float radius, string songName)
+            {
+                this.room = room;
+                this.radius = radius;
+                this.songName = songName;
+            }
+
+            public string room;
+            public float radius;
+            public string songName;
+        }
+        private void RainWorldGame_ctor(On.RainWorldGame.orig_ctor orig, RainWorldGame self, ProcessManager manager)
+        {
+            orig.Invoke(self, manager);
+            try
+            {
+                if (!fileshavebeenchecked)
+                {
+                    Debug("Checking files");
+                    string[] mydirs = AssetManager.ListDirectory("soundeffects", false, true);
+                    Debug("Printing all directories in soundeffects");
+                    foreach (string dir in mydirs)
+                    {
+                        //Debug(dir);
+
+
+                        string filename = GetFolderName(dir);
+                        //Debug(filename);
+
+                        //C:/ Program Files(x86) / Steam / steamapps / common / Rain World - My Copy / RainWorld_Data / StreamingAssets\soundeffects\!Entries.txt
+                        if (filename == "!entries.txt")
+                        {
+                            Debug("The file exists actually");
+                            string[] lines = File.ReadAllLines(dir);
+
+                            Debug("it has read all its lines");
+                            List<string[]> listtho = new List<string[]>();
+                            foreach (string line in lines)
+                            {
+                                string[] chord = line.Split(new char[] { '$' });
+                                Debug("Plopmachine:  Registered Entry: " + line + " in ");
+                                listtho.Add(chord);
+                            }
+
+                            Debug("it has added the thongs");
+                            ChordInfos = listtho.ToArray();
+                        }
+                        //Debug("It got to this end");
+                    }
+                    Debug("Yo it's done with sfx");
+                    string[] dirs = AssetManager.ListDirectory("world", true, true);
+                    foreach (string dir in dirs)
+                    {
+                        string regName = GetFolderName(dir).ToUpper();
+                        string path = dir + Path.DirectorySeparatorChar + "vibe_zones.txt";
+                        if (File.Exists(path) && !vibeZonesDict.ContainsKey(regName))
+                        {
+                            Debug($"It found the path for vibezone {regName} tho");
+                            string[] lines = File.ReadAllLines(path);
+                            VibeZone[] zones = new VibeZone[lines.Length];
+                            for (int i = 0; i < lines.Length; i++)
+                            {
+                                string[] arr = lines[i].Split(',');
+                                zones[i] = new VibeZone(arr[0], float.Parse(arr[1]), arr[2]);
+                                Debug($"{arr[0]}, {arr[1]}, {arr[2]}");
+                            }
+                            vibeZonesDict.Add(regName, zones);
+                        }
+                    }
+                    Debug("Yo wassup it went past worlds");
+                    fileshavebeenchecked = true;
+                }
+            }
+            catch (Exception e)
+            {
+                Debug(e);
+                //throw;
+            }
+        }
+        static string GetFolderName(string path)
+        {
+            string[] arr = path.Split(Path.DirectorySeparatorChar);
+            return arr[arr.Length - 1];
+        }
 
         public void hehedrawsprites(On.PlayerGraphics.orig_DrawSprites orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
         {
@@ -226,35 +304,43 @@ namespace SoundThing
 
         private SoundID[] SampDict(string length)
         {
+            //Debug($"It's trying to get length {length}");
             SoundID[] library = new SoundID[7]; //to do:  make better
-            //switch the samples over to be categorised by short-medium-or-long, and region
-            string acronym = CurrentRegion.ToLower();
-            string patch = "sup";
-            switch (acronym)
-            {
-                case "su" or "hi":
-                    patch = "Trisaw";
-                    break;
-
-                case "gw" or "sh":
-                    patch = "Bell";
-                    break;
-
-                case "ss" or "sb" or "sl":
-                    patch = "Litri";
-                    break;
-
-                case "cc" or "si":
-                    patch = "Sine";
-                    break;
-
-                case "ds" or "lf" or "uw":
-                    patch = "Clar";
-                    break;
-                default:
-                    patch = "Trisaw";
-                    break;
-            }
+            string acronym = CurrentRegion.ToUpper();
+            VibeZone[] newthings;
+            bool diditwork = vibeZonesDict.TryGetValue(acronym, out newthings);
+            //we retrieve a newthings array (one of many vibezones)
+            //Debug("C" + diditwork);
+            VibeZone newthing = newthings[0]; //TEMP DUMMY FOR UNTIL HELLOTHERE'S REQUIUM
+            //and pick the one that is closer
+            //Debug("d");
+            string patch = newthing.songName;
+            //Debug(patch);
+            //switch (acronym)
+            //{
+            //    case "su" or "hi":
+            //        patch = "Trisaw";
+            //        break;
+            //
+            //    case "gw" or "sh":
+            //        patch = "Bell";
+            //        break;
+            //
+            //    case "ss" or "sb" or "sl":
+            //        patch = "Litri";
+            //        break;
+            //
+            //    case "cc" or "si":
+            //        patch = "Sine";
+            //        break;
+            //
+            //    case "ds" or "lf" or "uw":
+            //        patch = "Clar";
+            //        break;
+            //    default:
+            //        patch = "Trisaw";
+            //        break;
+            //}
             //cc(chimney cannopy)
             //ds(drainage system)
             //gw(garbage wastes)
@@ -355,12 +441,12 @@ namespace SoundThing
 
             if (tlow == thigh) { thigh++; }
 
-            int lol = RXRandom.Range(tlow, thigh);
+            int lol = UnityEngine.Random.Range(tlow, thigh);
 
             return lol;
         }
 
-        private int Peep(int value)
+        private int Peep(int value)  //marked for die
         {
             //take 10 as an example, agora being.... 2-3 people? 
             // i can follow a 2.5 people rule
@@ -388,14 +474,25 @@ namespace SoundThing
                 string lettersafterpoint = st1.Substring(PointPos);
                 int lettersamount = lettersafterpoint.Length - 1;
 
-                if (lettersamount < 5)
+                switch (lettersamount)
                 {
-                    if (lettersamount == 4) { st1 += "0"; }
-                    else if (lettersamount == 3) { st1 += "00"; }
-                    else if (lettersamount == 2) { st1 += "000"; }
-                    else if (lettersamount == 1) { st1 += "0000"; }
-                    else if (lettersamount == 0) { Debug("what"); st1 += "00000"; }
+                    case 4:
+                        st1 += "0";
+                        break;
+                    case 3:
+                        st1 += "00";
+                        break;
+                    case 2:
+                        st1 += "000";
+                        break;
+                    case 1:
+                        Debug("what"); 
+                        st1 += "00000";
+                        break;
+                    default: 
+                        break;
                 }
+
                 //Debug($"{st1}, Peep 2");
             }
 
@@ -404,7 +501,9 @@ namespace SoundThing
             string latter = parts[1].Substring(0, 5);
             int latterint = int.Parse(latter);
 
-            int dicedint = RXRandom.Range(0, 100000);
+            //int dicedint = UnityEngine.Random.Range(0, 100000);
+            int dicedint = UnityEngine.Random.Range(0, 100000);
+            
             //1.99999 latter
             //  44246 diced
             if (latterint > dicedint) { former++; }
@@ -412,7 +511,7 @@ namespace SoundThing
 
         }
 
-        private void IntiN(string input, VirtualMicrophone mic)
+        private void Plop(string input, VirtualMicrophone mic)
         {
             string s = input.ToString();
             
@@ -518,22 +617,6 @@ namespace SoundThing
             if (CurrentKey == 9) { CurrentKey = -3; }
         }
 
-        string[,] ChordInfos =
-        {
-            { "Triad", "Chord", "L-4-1 L-4-3 L-4-5,L-3-1 L-3-3 L-2-5 L-2-6 L-2-4", "Triad,40,50,S-4-6 S-4-5,0|Triad,40,50,S-4-3,0|Balaboo,40,50,S-4-3 S-3-4,0|Finga,60,90,S-4-5,0"},
-            { "Balaboo", "Chord", "L-4-2 L-4-3 L-4-6,L-3-2 L-2-6 L-2-5", "Triad,40,60,0,0|Routsi,40,60,S-4-5,0"},
-            { "Finga", "Chord", "L-4-3 L-4-5 L-4-7,L-3-4 L-3-5 L-3-6 L-2-1", "Triad,40,50,0,0|Balaboo,100,120,S-5-3 S-4-7 S-4-5,+1"},
-            { "Routsi", "Chord", "L-4-3 L-4-5 L-4-6,L-2-5 L-2-6 L-3-1 L-3-3", "Balaboo,30,60,S-4-5 S-5-1,0|Balaboo,30,60,S-5-1,+2"}, //pretty nice
-            { "Grast", "Chord", "L-4-4 L-4-5 L-5-1,L-3-2 L-3-4 L-3-5", "Finga,45,70,S-5-3 S-4-5,0|Grast,30,60,S-5-1,-2|Rhast,20,30,S-4-6,0"},
-            { "Rhast", "Chord", "L-4-1 L-4-4 L-4-6,L-3-4 L-3-2 L-3-1 L-2-6 L-2-4", "Balaboo,40,59,S-4-5,0|Rhast,40,50,S-4-7,+1|Triad,50,60,S-5-1,0" },
-            { "Yooo", "Riff", "S-4-1,S-4-2,S-4-5 S-4-7,25,S-4-5 S-4-7,S-4-5 S-4-7,1,S-5-3 S-4-4,S-5-7 S-5-3,21,!,30,S-4-3,S-4-7,S-5-3", "Triad" },
-            { "Hellothere", "Riff", "M-5-5,50,M-5-3,30,M-5-2,2,M-4-6,8,M-4-2,50,6loop4,5,M-3-7,30,L-3-3,60,!", "Heyo" },
-            { "Heskotherelol", "Riff", "d=30,M-3-4,d/1.05,M-3-6,d/1.05,M-4-3,d/1.05,6loop10,M-4-4,d/1.05,M-4-6,d/1.05,M-5-3,d/1.05,6loop10,M-5-3,d*1.05,M-4-6,d*1.05,M-4-4,d*1.05,M-4-1,d*1.05,M-3-5,d*1.05,10loop11,10,L-3-3,60,!", "Heyolol" },
-            { "Dtesthaha", "Riff", "d=190,D-4-1,d/1.1,D-4-4,d/1.1,D-4-5,d/1.1,6loop25,D-7-1,90,M-5-5,!", "Heyolol" },
-            { "Heyo", "Chord", "L-6-3,L-3-2 L-2-3", "Hellothere,90,130,0,0" },
-            { "Heyolol", "Chord", "L-6-3 L-5-4 L-5-1,L-3-2 L-2-3", "Heskotherelol,90,130,0,0|Dtesthaha,60,100,0,0" }
-            //{ "Firstsample", "Sample", "Lol,2,200", "Triad" }
-        };
 
         private void PlayEntry(VirtualMicrophone mic)
         {
@@ -551,28 +634,28 @@ namespace SoundThing
                     //Debug($"Nuclear {UpcomingEntry} vs Coughing {ChordInfos[i, 0]}... Round {i}, begin!");
 
                     //Debug("ummm");
-                    if (UpcomingEntry == ChordInfos[i, 0])
+                    if (UpcomingEntry == ChordInfos[i][0])
                     {
                         //Debug($"so it tested with {UpcomingEntry}");
                         //Debug($"{ChordInfos[i, 0]},{ChordInfos[i, 1]},{ChordInfos[i, 2]},{ChordInfos[i, 3]}");
 
-                        switch (ChordInfos[i, 1])
+                        switch (ChordInfos[i][1])
                         {
                             case "Chord":
                                 //sowhatwasthechorddude = UpcomingEntry;
-                                chordnotes = ChordInfos[i, 2];
-                                chordleadups = ChordInfos[i, 3];
+                                chordnotes = ChordInfos[i][2];
+                                chordleadups = ChordInfos[i][3];
                                 entrychord = true;
                                 break;
                             case "Riff":
-                                riffline = ChordInfos[i, 2];
-                                riffleadups = ChordInfos[i, 3];
+                                riffline = ChordInfos[i][2];
+                                riffleadups = ChordInfos[i][3];
                                 //Debug(ChordInfos[i, 3] +" " + riffleadups);
                                 entryriff = true;
                                 break;
                             case "Sample":
-                                sampleinfo = ChordInfos[i, 2];
-                                sampleleadups = ChordInfos[i, 3];
+                                sampleinfo = ChordInfos[i][2];
+                                sampleleadups = ChordInfos[i][3];
                                 entrysample = true;
                                 break;
                         }
@@ -591,25 +674,27 @@ namespace SoundThing
                 string chord = inst[0];
                 string bass = inst[1];
 
-                string[] notes = chord.Split(' ');
-            
+                //string[] notes = chord.Split(' ');
+                string[] notes = chord.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+
                 for (int i = 0; i < notes.Length; i++ )
                 {
-                    IntiN(notes[i], mic);
+                    Plop(notes[i], mic);
                     //Debug($"It is playing the Notes?{chord},{notes.Length},{i}, {notes[i]}... {debugtimer}");    
                 }
                 //Debug($"done playing them???{EntryRequest}");                                  !!!!!!!!!!
-                string[] bassnotes = bass.Split(' ');
-                int sowhichoneisitboss = RXRandom.Range(0, bassnotes.Length);
+                //string[] bassnotes = bass.Split(' ', StringSplitOptions.RemoveEmptyEntries);
+                string[] bassnotes = bass.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
+                int sowhichoneisitboss = UnityEngine.Random.Range(0, bassnotes.Length);
            
-                IntiN(bassnotes[sowhichoneisitboss], mic); //THIS is where it fucked up, which was because it had a space before the comma
+                Plop(bassnotes[sowhichoneisitboss], mic); //THIS is where it fucked up, which was because it had a space before the comma
                 //Debug("And i played a Bass note");
 
 
                 //all notes have been played, moving onto liason
 
                 string[] leadups = chordleadups.Split('|');
-                int butwhatnowboss = RXRandom.Range(0, leadups.Length);
+                int butwhatnowboss = UnityEngine.Random.Range(0, leadups.Length);
                 string leadup = leadups[butwhatnowboss];
                 
                 string[] leadupinfo = leadup.Split(',');
@@ -685,7 +770,7 @@ namespace SoundThing
                     {
                         if (Ltime1 == 0)
                         {
-                            IntiN(Lnote1, mic);
+                            Plop(Lnote1, mic);
                             Ltime1 = Peeps(30, 150);
                         }
                         else
@@ -697,7 +782,7 @@ namespace SoundThing
                     {
                         if (Ltime2 == 0)
                         {
-                            IntiN(Lnote2, mic);
+                            Plop(Lnote2, mic);
                             Ltime2 = Peeps(30, 150);
                         }
                         else
@@ -709,7 +794,7 @@ namespace SoundThing
                     {
                         if (Ltime3 == 0)
                         {
-                            IntiN(Lnote3, mic);
+                            Plop(Lnote3, mic);
                             Ltime3 = Peeps(30, 150);
                         }
                         else
@@ -731,18 +816,14 @@ namespace SoundThing
                 riffindex = 0;
                 rifflength = theline.Length;
                 playingriff = true;
-
             }
 
-            if (playingriff == true)
+            if (playingriff)
             {
-                if (inwaitmode == true)
+                if (inwaitmode)
                 {
                     riffstopwatch--;//just to double check but 0 is the same as 1, you're delaying it whatever
-                    if (riffstopwatch <= 0)
-                    {
-                        inwaitmode = false;
-                    }
+                    if (riffstopwatch <= 0) inwaitmode = false; // :3
                 }
                 else
                 {
@@ -758,44 +839,22 @@ namespace SoundThing
                         riffcurrentvar = theline[riffindex];
                         Debug("Currently treating "+riffindex+". With currentvar: "+riffcurrentvar);
                         string[] splitvar = riffcurrentvar.Split(' ');
-                        int whichofthese = RXRandom.Range(0, splitvar.Length);
+                        int whichofthese = UnityEngine.Random.Range(0, splitvar.Length);
                         string treatedvar = splitvar[whichofthese];
-
-                        //start of Parser
-
-
-                        //if (Regex.IsMatch(teststring, "a"))
-                        //{
-                        //    Debug("TheredobeanAinit");
-                        //}
 
                         //Debug("hello");
                         //testing if it's just a number
-                        bool umitsanumber = true;
-                        try
+                        int intivarp;
+                        bool umitsanumber = int.TryParse(treatedvar, out intivarp);
+                        if (umitsanumber)
                         {
-                            int intivaryo = int.Parse(treatedvar);
-                        }
-                        catch
-                        {
-                            //ok i guess it's not a number :steamsad:
-                            umitsanumber = false;
-                        }
-
-                        if (umitsanumber == true)
-                        {
-                            int intivaryo = int.Parse(treatedvar);
-                            riffstopwatch = intivaryo;
+                            riffstopwatch = intivarp;
                             inwaitmode = true;
                         }
-
-                        
-
-
                         else
                         {
                             Debug(treatedvar);
-                            if (Regex.IsMatch(treatedvar, "loop"))
+                            if (treatedvar.Contains("loop"))
                             {
                                 Debug("Matched it as a loop");
                                 if (islooping)
@@ -818,7 +877,7 @@ namespace SoundThing
                                 else
                                 {
                                     //start the timeloop of the things
-                                    string[] Supdude = Regex.Split(treatedvar, "loop");
+                                    string[] Supdude = treatedvar.Split(new string[] { "loop" }, StringSplitOptions.None);
                                     
                                     tilestasked = int.Parse(Supdude[0]);
                                     loopcountdown = int.Parse(Supdude[1]);
@@ -827,127 +886,117 @@ namespace SoundThing
                                     Debug($"He thinks he's {riffindex}, {tilestasked}");
                                 }
                             }
-                            if (Regex.IsMatch(treatedvar, "d"))
+                            if (treatedvar.Contains("d"))
                             {
-                                if (treatedvar.IndexOf('=') != -1)
+                                char lollollol = treatedvar[1];
+
+                                switch (lollollol)
                                 {
-                                    riffd = float.Parse(treatedvar.Substring(2));
+                                    case '=':
+                                        riffd = float.Parse(treatedvar.Substring(2));
+                                        break;
+                                    case '+':
+                                        riffd += float.Parse(treatedvar.Substring(2));
+                                        break;
+                                    case '-':
+                                        riffd -= float.Parse(treatedvar.Substring(2));
+                                        if (riffd < 0)
+                                            riffd = 0;
+                                        break;
+                                    case '*':
+                                        //hehehehe hellothere fuck uuu >:))))))
+                                        riffd *= float.Parse(treatedvar.Substring(2));
+                                        break;
+                                    case '/':
+                                        if (riffd != 0 || float.Parse(treatedvar.Substring(2)) != 0.0f)
+                                            riffd /= float.Parse(treatedvar.Substring(2));
+                                        break;
+                                    default:
+                                        break;
                                 }
-                                if (treatedvar.IndexOf('+') != -1)
-                                {
-                                    riffd += float.Parse(treatedvar.Substring(2));
-                                }
-                                if (treatedvar.IndexOf('-') != -1)
-                                {
-                                    riffd -= float.Parse(treatedvar.Substring(2));
-                                    if (riffd < 0)
-                                        riffd = 0;
-                                }
-                                if (treatedvar.IndexOf('*') != -1)
-                                {
-                                    //hehehehe hellothere fuck uuu >:))))))
-                                    riffd *= float.Parse(treatedvar.Substring(2));
-                                }
-                                if (treatedvar.IndexOf('/') != -1)
-                                {
-                                    if (riffd != 0 || float.Parse(treatedvar.Substring(2)) != 0.0f)
-                                        riffd /= float.Parse(treatedvar.Substring(2));
-                                }
-                                
-                                riffstopwatch = (int)Math.Round((double)riffd, 0); ;
+                                riffstopwatch = (int)Math.Round((double)riffd, 0);
                                 Debug($"Matched it as a Delta, waiting for {riffd}, {riffstopwatch}");
                                 inwaitmode = true;
                             }
 
-                            if (Regex.IsMatch(treatedvar, "!"))
+                            if (treatedvar.Contains("!"))
                             {
                                 Debug("Matched it as a chorder, the leadups are");
                                 EntryRequest = true;
                                 //Debug(riffleadups);
                                 string[] leadups = riffleadups.Split('|');
                                 Debug("Splits it up");
-                                for (int i = 0; i < leadups.Length - 1; i++)
-                                {
-                                    Debug(leadups[i]);
-                                }
-                                int butwhatnowboss = RXRandom.Range(0, leadups.Length);
-                                Debug("Picks a random one");
+                                //for (int i = 0; i < leadups.Length - 1; i++)
+                                //{
+                                //    Debug(leadups[i]);
+                                //}
+                                int butwhatnowboss = UnityEngine.Random.Range(0, leadups.Length);
+                                //Debug("Picks a random one");
                                 string leadup = leadups[butwhatnowboss];
-                                Debug("Picks " + leadup);
+                                //Debug("Picks " + leadup);
                                 UpcomingEntry = leadup;
                                 //Debug(riffleadups + " " + leadups + " "+ butwhatnowboss + " " + leadup + " " + UpcomingEntry);
                             }
-                            if (Regex.IsMatch(treatedvar, "L-") || Regex.IsMatch(treatedvar, "M-") || Regex.IsMatch(treatedvar, "S-"))
+                            if (treatedvar.Contains("L-") || treatedvar.Contains("M-") || treatedvar.Contains("S-"))
                             {
                                 Debug("Matched it as a noter");
                                 //will assume its a note for now
                                 treatedvar = treatedvar.ToString();
-                                IntiN(treatedvar, mic);
+                                Plop(treatedvar, mic);
                             }
-                            if (Regex.IsMatch(treatedvar, "D-"))
+                            if (treatedvar.Contains("D-"))
                             {
+                                
                                 Debug("Matched it as a Dynamic noter");
                                 var riffnextvar = theline[riffindex+1];
                                 Debug("Predicting future index to be " + riffindex + "+1. With thenextvar being: " + riffnextvar);
                                 string[] splitnextvar = riffnextvar.Split(' ');
-                                int whichofthesenexts = RXRandom.Range(0, splitnextvar.Length);
+                                int whichofthesenexts = UnityEngine.Random.Range(0, splitnextvar.Length);
                                 string treatednextvar = splitnextvar[whichofthesenexts];
 
-                                bool umnextsanumber = true;
-                                try
+                                int intinextvarp;
+                                bool umnextanumber = int.TryParse(treatednextvar, out intinextvarp);
+                                if (umnextanumber == true)
                                 {
-                                    //Debug("Testing parsing it" + umnextsanumber);
-                                    int intivaryo = int.Parse(treatednextvar);
-                                    
-                                }
-                                catch
-                                {
-                                    //ok i guess it's not a number :steamsad:
-                                    Debug("it didn't parse");
-                                    umnextsanumber = false;
-                                }
-
-                                if (umnextsanumber == true)
-                                {
-                                    int intinextvaryo = int.Parse(treatednextvar);
-                                    upcomingdelay = intinextvaryo;
+                                    upcomingdelay = intinextvarp;
                                 }
                                 else
                                 {
-                                    if (Regex.IsMatch(treatednextvar, "d"))
+                                    if (treatednextvar.Contains("d"))
                                     {
-                                        float dummyriffd = riffd;
-                                        if (treatedvar.IndexOf('=') != -1)
                                         {
-                                            dummyriffd = float.Parse(treatednextvar.Substring(2));
+                                            char lollollol = treatednextvar[1];
+                                            float dummyriffd = riffd;
+                                            switch (lollollol)
+                                            {
+                                                case '=':
+                                                    dummyriffd = float.Parse(treatednextvar.Substring(2));
+                                                    break;
+                                                case '+':
+                                                    dummyriffd += float.Parse(treatednextvar.Substring(2));
+                                                    break;
+                                                case '-':
+                                                    dummyriffd -= float.Parse(treatednextvar.Substring(2));
+                                                    if (dummyriffd < 0)
+                                                        dummyriffd = 0;
+                                                    break;
+                                                case '*':
+                                                    //hehehehe hellothere fuck uuu >:))))))
+                                                    dummyriffd *= float.Parse(treatednextvar.Substring(2));
+                                                    break;
+                                                case '/':
+                                                    if (dummyriffd != 0 || float.Parse(treatednextvar.Substring(2)) != 0.0f)
+                                                        dummyriffd /= float.Parse(treatednextvar.Substring(2));
+                                                    break;
+                                                default:
+                                                    break;
+                                            }
+                                            upcomingdelay = (int)Math.Round((double)dummyriffd, 0);
+                                            Debug($"Matched it as a Delta, waiting for {riffd}, {riffstopwatch}");
                                         }
-                                        if (treatedvar.IndexOf('+') != -1)
-                                        {
-                                            dummyriffd += float.Parse(treatednextvar.Substring(2));
-                                        }
-                                        if (treatedvar.IndexOf('-') != -1)
-                                        {
-                                            dummyriffd -= float.Parse(treatednextvar.Substring(2));
-                                            if (riffd < 0)
-                                                riffd = 0;
-                                        }
-                                        if (treatedvar.IndexOf('*') != -1)
-                                        {
-                                            //hehehehe hellothere fuck uuu >:))))))
-                                            dummyriffd *= float.Parse(treatednextvar.Substring(2));
-                                        }
-                                        if (treatedvar.IndexOf('/') != -1)
-                                        {
-                                            if (dummyriffd != 0 || float.Parse(treatednextvar.Substring(2)) != 0.0f)
-                                                dummyriffd /= float.Parse(treatednextvar.Substring(2));
-                                        }
-
-                                        upcomingdelay = (int)Math.Round((double)dummyriffd, 0); ;
-                                        Debug($"Matched it as a Delta, waiting for {riffd}, {riffstopwatch}");
                                     }
                                 }
-                                treatedvar = treatedvar.ToString().Substring(1);
-
+                                treatedvar = treatedvar.Substring(1);
                                 int currentsounds = mic.soundObjects.Count;
                                 Debug("I have calculated upcomingdelay to be " + upcomingdelay +" and the amount of currently to be " + currentsounds);
                                 if ((upcomingdelay < 3)||currentsounds>22)
@@ -958,12 +1007,12 @@ namespace SoundThing
                                 {
                                     treatedvar = "M" + treatedvar;
                                 }
-                                else //(upcomingdelay >= 100)
+                                else //(upcomingdelay >= 75)
                                 {
                                     treatedvar = "L" + treatedvar;
                                 }
                                 //Debug(treatedvar);
-                                IntiN(treatedvar, mic);
+                                Plop(treatedvar, mic);
                             }
                         }
                         //Debug("HEY THIS ONE DOES THE THING IT*S COOL");
@@ -1055,7 +1104,7 @@ namespace SoundThing
                     playingsample = false;
                     //Debug(riffleadups);
                     string[] leadups = sampleleadups.Split('|');
-                    int butwhatnowboss = RXRandom.Range(0, leadups.Length);
+                    int butwhatnowboss = UnityEngine.Random.Range(0, leadups.Length);
                     string leadup = leadups[butwhatnowboss];
                     UpcomingEntry = leadup;
                     EntryRequest = true;
@@ -1173,11 +1222,6 @@ namespace SoundThing
             var mic = self.cameras[0].virtualMicrophone;
             CurrentRegion = self.world.region.name;
 
-
-            //intensity = intensity;
-
-
-
             /*
             //On Initialize()
             IDetour hookTestMethodA = new Hook(
@@ -1193,16 +1237,7 @@ namespace SoundThing
                 }
             */
 
-
-            //if (Regex.IsMatch(teststring, "a"))
-            //{
-            //    Debug("TheredobeanAinit");
-            //}
-            //if (Regex.IsMatch(teststring, "e"))
-            //{
-            //    Debug("TheredobeanEinit");
-            //}
-
+            PlayEntry(mic);
 
             //Debug($"CurrentRegion is: {CurrentRegion}");
             if (CurrentRegion == null)
@@ -1211,68 +1246,12 @@ namespace SoundThing
             }
 
 
-            //string heheaha = "1.5";
-            //float hahaehe = float.Parse(heheaha);
-            //if (3f * hahaehe ==  4.5f)
-            //{
-            //    Debug("Yooooooooo");
-            //}
-
 
             //if (debugtimer % 160 == 00) { PlayThing(TriangleC4, mic, 1); }
             //if (debugtimer % 160 == 20) { PlayThing(TriangleC4, mic, (float)Math.Pow(magicnumber, 4)); }
             //if (debugtimer % 160 == 40) { PlayThing(TriangleC4, mic, (float)Math.Pow(magicnumber, 7)); }
             //if (debugtimer % 160 == 60) { PlayThing(TriangleC4, mic, (float)Math.Pow(magicnumber, 11)); }
 
-            /*
-            float fvalue = float.Parse(treatedvar.Substring(2));
-            float dvalue = riffd;
-            float avalue = dvalue / fvalue;
-            string st1 = avalue.ToString();
-            int PointPos = st1.IndexOf('.');
-            if (PointPos == -1) { st1 += ".00000"; }
-            else
-            {
-                string lettersafterpoint = st1.Substring(PointPos);
-                int lettersamount = lettersafterpoint.Length - 1;
-                if (lettersamount < 5)
-                {
-                    if (lettersamount == 4) { st1 += "0"; }
-                    else if (lettersamount == 3) { st1 += "00"; }
-                    else if (lettersamount == 2) { st1 += "000"; }
-                    else if (lettersamount == 1) { st1 += "0000"; }
-                    else if (lettersamount == 0) { Debug("what"); st1 += "00000"; }
-                }
-            }
-            string[] parts = st1.Split('.');
-            int former = int.Parse(parts[0]);
-            string latter = parts[1].Substring(0, 5);
-            int latterint = int.Parse(latter);
-            int dicedint = RXRandom.Range(0, 100000);
-            if (latterint > dicedint) { former++; }
-            riffd = former;
-            */
-
-
-            //if (lol)
-            //{
-            //if (debugtimer % 160 == 00) { mic.PlaySound(C4ShortClar, 0f, intensity * 0.5f, 1); }
-            //if (debugtimer % 160 == 20) { mic.PlaySound(C4ShortClar, 0f, intensity * 0.5f, (float)Math.Pow(magicnumber, 4)); }
-            //if (debugtimer % 160 == 40) { mic.PlaySound(C4ShortClar, 0f, intensity * 0.5f, (float)Math.Pow(magicnumber, 7)); }
-            //if (debugtimer % 160 == 60) { mic.PlaySound(C4ShortClar, 0f, intensity * 0.5f, (float)Math.Pow(magicnumber, 11)); }
-
-            PlayEntry(mic);
-
-            //a live variable is one that must be updated (((((Life advice))))
-
-            //if (RainWorld.ShowLogs)
-            //{
-            //    lel = Peep(100);
-            //    lel2 = Peeps(2000, 3000);
-            //    Debug($"{lel}, {lel2}");
-            //    Debug(agora);
-            //}
-            //}
 
             
             yoyo = Input.GetKey("1");
@@ -1516,7 +1495,7 @@ namespace SoundThing
 
             if (self.musicPlayer.manager.menuMic != null)
             {
-                self.musicPlayer.manager.menuMic.PlaySound(SoundThing.HelloC);
+                self.musicPlayer.manager.menuMic.PlaySound(PlopMachine.HelloC);
             }
         }
     }

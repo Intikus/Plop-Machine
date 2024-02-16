@@ -1,0 +1,12 @@
+Triad$Chord$L-4-1 L-4-3 L-4-5,L-3-1 L-3-3 L-2-5 L-2-6 L-2-4$Triad,40,50,S-4-6 S-4-5,0|Triad,40,50,S-4-3,0|Balaboo,40,50,S-4-3 S-3-4,0|Finga,60,90,S-4-5,0
+Balaboo$Chord$L-4-2 L-4-3 L-4-6,L-3-2 L-2-6 L-2-5$Triad,40,60,0,0|Routsi,40,60,S-4-5,0
+Finga$Chord$L-4-3 L-4-5 L-4-7,L-3-4 L-3-5 L-3-6 L-2-1$Triad,40,50,0,0|Balaboo,100,120,S-5-3 S-4-7 S-4-5,+1
+Routsi$Chord$L-4-3 L-4-5 L-4-6,L-2-5 L-2-6 L-3-1 L-3-3$Balaboo,30,60,S-4-5 S-5-1,0|Balaboo,30,60,S-5-1,+2
+Grast$Chord$L-4-4 L-4-5 L-5-1,L-3-2 L-3-4 L-3-5$Finga,45,70,S-5-3 S-4-5,0|Grast,30,60,S-5-1,-2|Rhast,20,30,S-4-6,0
+Rhast$Chord$L-4-1 L-4-4 L-4-6,L-3-4 L-3-2 L-3-1 L-2-6 L-2-4$Balaboo,40,59,S-4-5,0|Rhast,40,50,S-4-7,+1|Triad,50,60,S-5-1,0
+Yooo$Riff$S-4-1,S-4-2,S-4-5 S-4-7,25,S-4-5 S-4-7,S-4-5 S-4-7,1,S-5-3 S-4-4,S-5-7 S-5-3,21,!,30,S-4-3,S-4-7,S-5-3$Triad
+Hellothere$Riff$M-5-5,50,M-5-3,30,M-5-2,2,M-4-6,8,M-4-2,50,6loop4,5,M-3-7,30,L-3-3,60,!$Heyo 
+Heskotherelol$Riff$d=30,M-3-4,d/1.05,M-3-6,d/1.05,M-4-3,d/1.05,6loop10,M-4-4,d/1.05,M-4-6,d/1.05,M-5-3,d/1.05,6loop10,M-5-3,d*1.05,M-4-6,d*1.05,M-4-4,d*1.05,M-4-1,d*1.05,M-3-5,d*1.05,10loop11,10,L-3-3,60,!$Heyolol 
+Dtesthaha$Riff$d=190,D-4-1,d/1.1,D-4-4,d/1.1,D-4-5,d/1.1,6loop25,D-7-1,90,M-5-5,!$Heyolol 
+Heyo$Chord$L-6-3,L-3-2 L-2-3$Hellothere,90,130,0,0 
+Heyolol$Chord$L-6-3 L-5-4 L-5-1,L-3-2 L-2-3$Heskotherelol,90,130,0,0|Dtesthaha,60,100,0,0
