@@ -7,8 +7,8 @@
     <ProjectGuid>{268BB7AD-5BFD-4135-AC7A-B33F5CF0441A}</ProjectGuid>
     <OutputType>Library</OutputType>
     <AppDesignerFolder>Properties</AppDesignerFolder>
-    <RootNamespace>SoundThing</RootNamespace>
-    <AssemblyName>SoundThing</AssemblyName>
+    <RootNamespace>PlopMachine</RootNamespace>
+    <AssemblyName>PlopMachine</AssemblyName>
     <TargetFrameworkVersion>v4.8</TargetFrameworkVersion>
     <LangVersion>latest</LangVersion>
     <FileAlignment>512</FileAlignment>
@@ -160,7 +160,7 @@
     <None Include="Mod\modinfo.json" />
   </ItemGroup>
   <ItemGroup>
-    <Content Include="Mod\plugins\SoundThing.dll" />
+    <Content Include="Mod\plugins\PlopMachine.dll" />
     <Content Include="Mod\thumbnail.png" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
