@@ -8,6 +8,12 @@ using System.IO;
 using System.Runtime.CompilerServices;
 using System.Runtime.InteropServices;
 using UnityEngine.Rendering;
+using System.Collections;
+using System.Linq;
+using UnityEngine.PlayerLoop;
+using System.Diagnostics;
+using System.Runtime.Remoting.Messaging;
+using IL.ScavengerCosmetic;
 
 [module: UnverifiableCode]
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -24,7 +30,7 @@ namespace PlopMachine
         int CurrentKey = 0;
         int QueuedModulation = 0;
         int debugtimer = 0;
-
+        
         readonly string[,] notesinkey =
         {
             {"Gb", "Ab", "Bb", "B" , "Db", "Eb", "F" , "Gb"}, //Gb  (the same as F#) 
@@ -55,12 +61,50 @@ namespace PlopMachine
             { 9  , 11 , 1  , 2  , 4  , 6  , 8  , 9  }, //A
             { 4  , 6  , 8  , 9  , 11 , 1  , 3  , 4  }, //E
             { 11 , 1  , 3  , 4  , 6  , 8  , 10 , 11 }, //B
-            { 6  , 8  , 10 , 11 , 1  , 3  , 5  , 6  }, //F#   (the same as Gb)
+            { 6  , 8  , 10 , 11 , 1  , 3  , 5  , 6  } //F#   (the same as Gb)
         };
+        //major key, goes root +2 +2 +1 +2 +2 +2  
+
+
+        //so the minor version of all of these are as follows:
+        public readonly int[,] intsinmkey = 
+        {
+            { 6  , 8  , 9  , 11 , 1  , 2  , 4  , 6  }, //Gb m (the same as F#) 
+            { 1  , 3  , 4  , 6  , 8  , 9  , 11 , 1  }, //Db m
+            { 8  , 10 , 11 , 1  , 3  , 4  , 6  , 8  }, //Ab m
+            { 3  , 5  , 6  , 8  , 10 , 11 , 1  , 3  }, //Eb m
+            { 10 , 0  , 1  , 3  , 5  , 6  , 8  , 10 }, //Bb m
+            { 5  , 7  , 8  , 10 , 0  , 1  , 3  , 5  }, //F  m
+            { 0  , 2  , 3  , 5  , 7  , 8  , 10 , 0  }, //C  m
+            { 7  , 9  , 10 , 0  , 2  , 3  , 5  , 7  }, //G  m
+            { 2  , 4  , 5  , 7  , 9  , 10 , 0  , 2  }, //D  m
+            { 9  , 11 , 0  , 2  , 4  , 5  , 7  , 9  }, //A  m
+            { 4  , 6  , 7  , 9  , 11 , 0  , 2  , 4  }, //E  m
+            { 11 , 1  , 2  , 4  , 6  , 7  , 9  , 11 }, //B  m
+            { 6  , 8  , 9  , 11 , 1  , 2  , 4  , 6  } //F# m  (the same as Gb)
+        };
+        //adjusted to go under the other circle in the circle of firths
+        public readonly int[,] intsinminkey =
+        {
+            { 3  , 5  , 6  , 8  , 10 , 11 , 1  , 3  }, //D# m (the same as Eb)
+            { 10 , 0  , 1  , 3  , 5  , 6  , 8  , 10 }, //Bb m
+            { 5  , 7  , 8  , 10 , 0  , 1  , 3  , 5  }, //F  m
+            { 0  , 2  , 3  , 5  , 7  , 8  , 10 , 0  }, //C  m
+            { 7  , 9  , 10 , 0  , 2  , 3  , 5  , 7  }, //G  m
+            { 2  , 4  , 5  , 7  , 9  , 10 , 0  , 2  }, //D  m
+            { 9  , 11 , 0  , 2  , 4  , 5  , 7  , 9  }, //A  m
+            { 4  , 6  , 7  , 9  , 11 , 0  , 2  , 4  }, //E  m
+            { 11 , 1  , 2  , 4  , 6  , 7  , 9  , 11 }, //B  m
+            { 6  , 8  , 9  , 11 , 1  , 2  , 4  , 6  }, //F# m  
+            { 1  , 3  , 4  , 6  , 8  , 9  , 11 , 1  }, //Db m 
+            { 8  , 10 , 11 , 1  , 3  , 4  , 6  , 8  }, //Ab m
+            { 3  , 5  , 6  , 8  , 10 , 11 , 1  , 3  } //Eb m (the same as D#)
+        };
+
+        //https://muted.io/major-minor-scales/#minor-scales
+
         //todo: make a switch thing that makes the notes into the ints immediatelly
-        
-        
-        
+
         /* the switch statement
         int transposition = 0;
         switch (NoteNow)
@@ -115,9 +159,16 @@ namespace PlopMachine
         }
         */
 
+        //enum ScaleType
+        //{
+        //
+        //}
+        bool inmajorscale = true;
+
+        //https://www.ableton.com/en/manual/using-push-2/#playing-melodies-and-harmonies
 
 
-        int lel = 27;
+        //int lel = 27;
         int lel2 = 0;
         int lel3 = 0;
         //int lel4 = 0;
@@ -130,7 +181,8 @@ namespace PlopMachine
         bool yoyo7 = true;
         bool yoyo8 = true;
         bool yoyo9 = true;
-        bool meme = false;
+        //bool meme = false;
+
 
         bool EntryRequest = true;
 
@@ -148,15 +200,12 @@ namespace PlopMachine
         string riffline = "the command line yo like [pow,pow]";
         string riffleadups = "just the name of the chord";
 
-        bool PatchTest = false;
-
-
         int chordstopwatch = 0;
         string chordqueuedentry = "yeah";
 
         bool inwaitmode = false;
         int riffstopwatch = 0;
-        string UpcomingEntry = "Balaboofake";         //important to set a first one
+        string UpcomingEntry = "Balaboo";         //important to set a first one
         string[] theline;
         int riffindex;
         int rifflength;
@@ -177,17 +226,10 @@ namespace PlopMachine
         int sampletransposition;
         int samplestopwatch;
 
+        bool weplipping = true;
+
         //readonly bool firstchordevahhhhhhasbeenplayedd = false;
 
-        bool Lslot1 = false;
-        bool Lslot2 = false;
-        bool Lslot3 = false;
-        int Ltime1 = 12;
-        int Ltime2 = 12;
-        int Ltime3 = 12;
-        string Lnote1 = "yo";
-        string Lnote2 = "yo";
-        string Lnote3 = "yo";
         int agora = 1;
         float phob;
 
@@ -196,7 +238,7 @@ namespace PlopMachine
 
         //float distancetovibeepicentre = 0;
 
-        float intensity = 1.0f;
+        //float intensity = 1.0f;
 
         AudioReverbPreset[] thepresets = [AudioReverbPreset.Off, AudioReverbPreset.Generic, AudioReverbPreset.PaddedCell, AudioReverbPreset.Room, AudioReverbPreset.Bathroom, AudioReverbPreset.Livingroom, AudioReverbPreset.Stoneroom, AudioReverbPreset.Auditorium, AudioReverbPreset.Concerthall, AudioReverbPreset.Cave, AudioReverbPreset.Arena, AudioReverbPreset.Hangar, AudioReverbPreset.CarpetedHallway, AudioReverbPreset.Hallway, AudioReverbPreset.StoneCorridor, AudioReverbPreset.Alley, AudioReverbPreset.Forest, AudioReverbPreset.City, AudioReverbPreset.Mountains, AudioReverbPreset.Quarry, AudioReverbPreset.Plain, AudioReverbPreset.ParkingLot, AudioReverbPreset.SewerPipe, AudioReverbPreset.Underwater, AudioReverbPreset.Drugged, AudioReverbPreset.Dizzy, AudioReverbPreset.Psychotic, AudioReverbPreset.User];
         /*
@@ -231,12 +273,12 @@ namespace PlopMachine
         public void OnEnable()
         {
             On.Music.IntroRollMusic.ctor += IntroRollMusic_ctor;
-            On.RainWorldGame.Update += RainWorldGame_Update;
+            On.RainWorldGame.Update += RainWorldGame_Update; //actually usefull
             
             On.AmbientSoundPlayer.TryInitiation += AmbientSoundPlayer_TryInitiation;
             On.PlayerGraphics.DrawSprites += hehedrawsprites;
 
-            On.RainWorldGame.ctor += RainWorldGame_ctor;
+            On.RainWorldGame.ctor += RainWorldGame_ctor; //actually usefull 
         }
 
         bool fileshavebeenchecked = false;
@@ -271,11 +313,8 @@ namespace PlopMachine
                     foreach (string dir in mydirs)
                     {
                         //Debug(dir);
-
-
                         string filename = GetFolderName(dir);
                         //Debug(filename);
-
                         //C:/ Program Files(x86) / Steam / steamapps / common / Rain World - My Copy / RainWorld_Data / StreamingAssets\soundeffects\!Entries.txt
                         if (filename == "!entries.txt")
                         {
@@ -330,7 +369,6 @@ namespace PlopMachine
             string[] arr = path.Split(Path.DirectorySeparatorChar);
             return arr[arr.Length - 1];
         }
-
         public void hehedrawsprites(On.PlayerGraphics.orig_DrawSprites orig, PlayerGraphics self, RoomCamera.SpriteLeaser sLeaser, RoomCamera rCam, float timeStacker, Vector2 camPos)
         {
             //orig(self, sLeaser, timeStacker, rCam, timeStacker, camPos);
@@ -340,7 +378,8 @@ namespace PlopMachine
             //Color mycolor = sLeaser[self.startSprite].color;
             foreach (var sprite in sLeaser.sprites)
             {
-                sprite.color = camocoloryo;
+                //sprite.color = camocoloryo;
+                sprite.color = mycolor; 
             }
         }
 
@@ -372,13 +411,20 @@ namespace PlopMachine
 
 
 
-        public int IndexTOCKInt(int integer)
+        public int IndexTOCKInt(int index)
         {
             int treatedkey = CurrentKey + 6;
-
-            int Note = intsinkey[treatedkey, integer - 1];
-
-            return Note;
+            int[,] thescale;
+            if (inmajorscale)
+            {
+                thescale = intsinkey;
+            }
+            else
+            { 
+                thescale = intsinmkey;
+            }
+            int integer = thescale[treatedkey, index - 1];
+            return integer;
         }
 
         private SoundID[] SampDict(string length)
@@ -511,7 +557,7 @@ namespace PlopMachine
             }
             return library;
         }
-
+        
         private int Peeps(int low, int high)
         {
 
@@ -592,30 +638,51 @@ namespace PlopMachine
 
         private void Plop(string input, VirtualMicrophone mic)
         {
-            string s = input.ToString();
-
+            string s = input.ToString(); //just to make sure it is a string, yknow :)
 
             string[] parts = s.Split('-');
 
-
             string slib = parts[0]; //either L for Long, M for Medium, or S for Short
             int oct = int.Parse(parts[1]);
-            int ind = int.Parse(parts[2]);
+            int ind;
+            bool intiseasy = int.TryParse(parts[2], out ind);
+            if (weplipping) if (intiseasy) if (3 == UnityEngine.Random.Range(1,4)) Dust.Add(s);
 
             //Debug($"So the string is {s}, which counts as {parts.Length} amounts of parts. {slib}, {oct}, {ind}");
 
             SoundID[] slopb = SampDict(slib);
 
-            //Debug($"and it picked a sample through the SampDict, called {slopb}");  
-            //Debug($"Samples picked: [{string.Join(", ", slopb.ToList())}]");
-
             //SoundID sampleused = slopb[oct]; //one octave higher
             SoundID sampleused = slopb[oct - 1];
             //Debug("Octave integer " + oct + ". sampleused: " + sampleused);
-
             //Debug($"It uses the sample {sampleused}");
+            int extratranspose = 0;
+            if (!intiseasy)
+            {
+                string appends = parts[2].Substring(1);
+                foreach (char letter in appends)
+                {
+                    switch(letter)
+                    {
+                        case 'b':
+                            extratranspose--;
+                            break;
+                        case '#':
+                            extratranspose++;
+                            break;
+                    }
+                }
+
+                ind = int.Parse(parts[2].Substring(0, 1));
+            }
 
             int transposition = IndexTOCKInt(ind);
+            if (!intiseasy)
+            {
+                transposition += extratranspose;
+                if (transposition > 11) { transposition -= 12; }
+                if (transposition < 0) { transposition += 12; }
+            }
 
             float speeed = 1;
 
@@ -628,10 +695,57 @@ namespace PlopMachine
             {
                 //Debug($"the note that played: {NoteNow}, {transposition} at {CurrentKey}");
             }
-
-            PlayThing(sampleused, mic, speeed);
+            float humanizingrandomnessinvelocitylol = (UnityEngine.Random.Range(360, 1001) / 1000f);
+            PlayThing(sampleused, humanizingrandomnessinvelocitylol, speeed, mic);
 
         }
+
+        
+        private void Plip(string input, float velocity, VirtualMicrophone mic)
+        {
+            //hellllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
+            myblue += velocity * 0.5f;
+            string s = input.ToString();
+
+            string[] parts = s.Split('-');
+
+            string slib = parts[0]; //either L for Long, M for Medium, or S for Short
+            int oct = int.Parse(parts[1]);
+            int ind;
+            bool intiseasy = int.TryParse(parts[2], out ind);
+            int extratranspose = 0;
+            if (!intiseasy)
+            {
+                string appends = parts[2].Substring(1);
+                foreach (char letter in appends)
+                {
+                    switch (letter)
+                    {
+                        case 'b':
+                            extratranspose--;
+                            break;
+                        case '#':
+                            extratranspose++;
+                            break;
+                    }
+                }
+
+                ind = int.Parse(parts[2].Substring(0, 1));
+            }
+            SoundID[] slopb = SampDict(slib);
+            SoundID sampleused = slopb[oct - 1];
+            int transposition = IndexTOCKInt(ind);
+            if (!intiseasy)
+            {
+                transposition += extratranspose;
+                if (transposition > 11) { transposition -= 12; }
+                if (transposition < 0) { transposition += 12; }
+            }
+            float speeed = 1 * Mathf.Pow(magicnumber, transposition);
+            PlayThing(sampleused, velocity, speeed, mic);
+
+        }
+        
 
         private void PushModulation()
         {
@@ -643,9 +757,25 @@ namespace PlopMachine
             if (dicedint <= 44 && dicedint > 7) CurrentKey += 2 * dicedsign;
             if (dicedint <= 7) CurrentKey += 3 * dicedsign;
 
+            if (UnityEngine.Random.Range(0, 101) < 4)
+            {
+                if (inmajorscale)
+                {
+                    inmajorscale = false;
+                    Debug("Minor scale now");
+                    //weplipping = false;
+                }
+                else
+                {
+                    inmajorscale = true;
+                    Debug("Major scale now");
+                    //weplipping = true;
+                }
+            }
+
+
             Debug($"The chance rolled {dicedint}, modified by {QueuedModulation}, it goes to {dicedsign}. So it was {deadint} and now is {CurrentKey}");
             QueuedModulation = 0;
-            IdleFetter.Analyze(this);
 
             //CurrentKey += QueuedModulation;
             
@@ -672,23 +802,15 @@ namespace PlopMachine
                 default:
                     break;
             }
+            IdleFetter.Analyze(this); //if made into a 12 tone temprement, maybe analyze will  be readjusted to remove duplicates, or muting the duplicates, or other stuff with them
         }
         private void PlayEntry(VirtualMicrophone mic)
         {
             //Debug($"yo sup dude,{EntryRequest} {UpcomingEntry} {chordqueuedentry} {entrychord} {entryriff} {entrysample} {playingchord} {playingriff} {playingsample}");
-
-            // string[] CurrentChordLol = new string[3];
-
-            //string sowhatwasthechorddude = "yo";                obsolete
-
-            // this part will check if it's a chord or entry, and seperate it to be one of the two
-
             if (EntryRequest == true)
                 for (int i = 0; i < ChordInfos.GetLength(0); i++)
                 {
                     //Debug($"Nuclear {UpcomingEntry} vs Coughing {ChordInfos[i, 0]}... Round {i}, begin!");
-
-                    //Debug("ummm");
                     if (UpcomingEntry == ChordInfos[i][0])
                     {
                         Debug($"So it's gonna start a {UpcomingEntry}, with the key {CurrentKey}");
@@ -721,7 +843,10 @@ namespace PlopMachine
             {
                 //playing a chord
                 //Debug("Starts the chord: " + UpcomingEntry + " " + chordnotes + "    and leadup: " + chordleadups);
+                myred += 2f;
                 PushModulation();
+                IdleFetter.Wipe(this);
+                IdleFetter.RandomMode();
                 EntryRequest = false;
                 entrychord = false;
                 string[] inst = chordnotes.Split(',');
@@ -729,12 +854,12 @@ namespace PlopMachine
                 string chord = inst[0];
                 string bass = inst[1];
 
-                //string[] notes = chord.Split(' ');
                 string[] notes = chord.Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
 
                 for (int i = 0; i < notes.Length; i++)
                 {
                     Plop(notes[i], mic);
+                    if (UnityEngine.Random.Range(0, 100) > 69) IdleFetter.Add(notes[i].Substring(2), this);
                     //Debug($"It is playing the Notes?{chord},{notes.Length},{i}, {notes[i]}... {debugtimer}");    
                 }
                 //Debug($"done playing them???{EntryRequest}");                                  !!!!!!!!!!
@@ -763,118 +888,16 @@ namespace PlopMachine
                 int madeupchordcountdown = Peeps(low, high);
 
                 chordstopwatch = madeupchordcountdown * 4;
-
                 if (liaisonnotes == "0")
                 {
-                    Lslot1 = false;
-                    Lslot2 = false;
-                    Lslot3 = false;
+                    //hehe
                 }
                 else
                 {
                     string[] thebabes = liaisonnotes.Split(' ');
-
-                    //ok so when 0 = short 1 = mid 2 = long
-
-                    int Ltype1 = UnityEngine.Random.Range(0, 3);
-                    int Ltype2 = UnityEngine.Random.Range(0, 3);
-                    int Ltype3 = UnityEngine.Random.Range(0, 3);
-
-                    switch (thebabes.Length)
+                    foreach (string s in thebabes)
                     {
-                        case 1:
-                            Lslot1 = true;
-                            switch (Ltype1)
-                            {
-                                case 0:
-                                    Lnote1 = "S-" + thebabes[0];
-                                    break;
-                                case 1:
-                                    Lnote1 = "M-" + thebabes[0];
-                                    break;
-                                case 2:
-                                    Lnote1 = "L-" + thebabes[0];
-                                    break;
-                            }
-                            Ltime1 = Peeps(6, 39);
-                            Lslot2 = false;
-                            Lslot3 = false;
-                            break;
-                        case 2:
-                            Lslot1 = true;
-                            switch (Ltype1)
-                            {
-                                case 0:
-                                    Lnote1 = "S-" + thebabes[0];
-                                    break;
-                                case 1:
-                                    Lnote1 = "M-" + thebabes[0];
-                                    break;
-                                case 2:
-                                    Lnote1 = "L-" + thebabes[0];
-                                    break;
-                            }
-                            Ltime1 = Peeps(6, 36);
-                            Lslot2 = true;
-                            switch (Ltype2)
-                            {
-                                case 0:
-                                    Lnote2 = "S-" + thebabes[1];
-                                    break;
-                                case 1:
-                                    Lnote2 = "M-" + thebabes[1];
-                                    break;
-                                case 2:
-                                    Lnote2 = "L-" + thebabes[1];
-                                    break;
-                            }
-                            Ltime2 = Peeps(9, 39);
-                            Lslot3 = false;
-                            break;
-                        case 3:
-                            Lslot1 = true;
-                            switch (Ltype1)
-                            {
-                                case 0:
-                                    Lnote1 = "S-" + thebabes[0];
-                                    break;
-                                case 1:
-                                    Lnote1 = "M-" + thebabes[0];
-                                    break;
-                                case 2:
-                                    Lnote1 = "L-" + thebabes[0];
-                                    break;
-                            }
-                            Ltime1 = Peeps(3, 49);
-                            Lslot2 = true;
-                            switch (Ltype2)
-                            {
-                                case 0:
-                                    Lnote2 = "S-" + thebabes[1];
-                                    break;
-                                case 1:
-                                    Lnote2 = "M-" + thebabes[1];
-                                    break;
-                                case 2:
-                                    Lnote2 = "L-" + thebabes[1];
-                                    break;
-                            }
-                            Ltime2 = Peeps(9, 59);
-                            Lslot3 = true;
-                            switch (Ltype3)
-                            {
-                                case 0:
-                                    Lnote3 = "S-" + thebabes[2];
-                                    break;
-                                case 1:
-                                    Lnote3 = "M-" + thebabes[2];
-                                    break;
-                                case 2:
-                                    Lnote3 = "L-" + thebabes[2];
-                                    break;
-                            }
-                            Ltime3 = Peeps(12, 55);
-                            break;
+                        IdleFetter.Add(s, this);
                     }
                 }
                 playingchord = true;
@@ -885,10 +908,6 @@ namespace PlopMachine
             if (playingchord == true)
             {
                 //Debug("It's playing liaisonnotes" + $": {Lslot1}, {Ltime1} {Lnote1}. {Lslot2}, {Ltime2} {Lnote2}. {Lslot3}, {Ltime3} {Lnote3}. ");
-                //REMINDER: LNOTES CURRENTLY NEED A LENGTH, 
-                //FUTURE UPDATE MIGHT TRY TO RANDOMISE THE LENGTH. LTYPE
-                
-                //WORKING ON THIS DOWN THERE
 
                 if (chordstopwatch == 0)
                 {
@@ -899,52 +918,7 @@ namespace PlopMachine
                 }
                 else
                 {
-                    if (Lslot1 == true)
-                    {
-                        if (Ltime1 == 0)
-                        {
-                            Plop(Lnote1, mic);
-
-                            if (Lnote1.Contains("S-")) Ltime1 = Peeps(30, 120);
-                            if (Lnote1.Contains("M-")) Ltime1 = Peeps(80, 200);
-                            if (Lnote1.Contains("L-")) Ltime1 = Peeps(150, 300);
-
-                            Debug($"Liaison 1 is {Lnote1}, time delayed= {Ltime1}");
-                        }
-                        else
-                        {
-                            Ltime1--;
-                        }
-
-                    }
-                    if (Lslot2 == true)
-                    {
-                        if (Ltime2 == 0)
-                        {
-                            Plop(Lnote2, mic);
-                            if (Lnote2.Contains("S-")) Ltime2 = Peeps(30, 120);
-                            if (Lnote2.Contains("M-")) Ltime2 = Peeps(80, 200);
-                            if (Lnote2.Contains("L-")) Ltime2 = Peeps(150, 300);
-                        }
-                        else
-                        {
-                            Ltime2--;
-                        }
-                    }
-                    if (Lslot3 == true)
-                    {
-                        if (Ltime3 == 0)
-                        {
-                            Plop(Lnote3, mic);
-                            if (Lnote3.Contains("S-")) Ltime3 = Peeps(30, 120);
-                            if (Lnote3.Contains("M-")) Ltime3 = Peeps(80, 200);
-                            if (Lnote3.Contains("L-")) Ltime3 = Peeps(150, 300);
-                        }
-                        else
-                        {
-                            Ltime3--;
-                        }
-                    }
+                    IdleFetter.Update(mic, this);
                     chordstopwatch--;
                 }
             }
@@ -973,6 +947,7 @@ namespace PlopMachine
                 {
                     if (riffindex < rifflength)
                     {
+                        myred += 0.075f;
                         //if (pushingindex) { riffindex = queuedindex; pushingindex = false; }
                         //Debug("Started they thing");
                         //Debug("hullo");
@@ -988,8 +963,7 @@ namespace PlopMachine
 
                         //Debug("hello");
                         //testing if it's just a number
-                        int intivarp;
-                        bool umitsanumber = int.TryParse(treatedvar, out intivarp);
+                        bool umitsanumber = int.TryParse(treatedvar, out int intivarp);
                         if (umitsanumber)
                         {
                             riffstopwatch = intivarp;
@@ -1188,7 +1162,7 @@ namespace PlopMachine
 
                 speeedofsample *= Mathf.Pow(magicnumber, sampletransposition);
 
-                PlayThing(whichsample, mic, speeedofsample);
+                PlayThing(whichsample, 1, speeedofsample, mic);
             }
 
             if (playingsample == true)
@@ -1225,14 +1199,13 @@ namespace PlopMachine
             //Debug("fuckoff");
         }
 
-
-        private void PlayThing(SoundID Note, VirtualMicrophone virtualMicrophone, float speed)
+        private void PlayThing(SoundID Note, float velocity, float speed, VirtualMicrophone virtualMicrophone)
         {
 
             //virtualMicrophone.PlaySound(Note, 0f, intensity*0.5f, speed);
-
-            float pan = 0;
-            float vol = intensity * 0.5f;
+            
+            float pan = (float)(UnityEngine.Random.Range(-350, 351) / 1000f);
+            float vol = velocity * 0.5f;
             float pitch = speed;
 
             //Debug($"Trying to play a {Note}");
@@ -1307,79 +1280,191 @@ namespace PlopMachine
             }
 
         }
+        struct Flutter
+        {
+            public Flutter(string originalnote, string[] fluttertail, int stopwatch, int step, float basetime, float propacceleration)
+            {
+                this.originalnote = originalnote; //for safekeeping
+                this.fluttertail = fluttertail; //the path that will follow
+                this.stopwatch = stopwatch;
+                this.step = step; //how many steps through the fluttertail has been taken (though zero isn't a good one)
+                this.basetime = basetime;
+                this.propacceleration = propacceleration;
+            }
+            public string originalnote; //just for safekeeping aye?
+            public string[] fluttertail;//First in array is always nothing,   ...  first one in array is the one you start at
+            public int stopwatch;
+            public int step; //starts at 0,  ...     starts at -1
+            public float basetime;
+            public float propacceleration; //will multiply basetime by this
+        }
+        
+        //so, sometimes when a Plop plays, it also is followed by some tail, dust, flutter, those are its Plip(s)
+        //but it registeres to play plips by adding the note onto the Dust. ("kicking" the dust)
+        //this thing just keeps the tails
+        //the update will then check all the dust and see if any of them should advance to the next step.
+        
+        //when advancing to the next step, it'll then play the note in the tail at that index in fluttertail 
+        //if it has advanced to the last step, play the note, then terminate DESTROY KILL ANNIHALATE THEM KILL 
 
+        //for each step, the loudness of the note should be weakened, to give the sound the "flutters away" jazz.
+        //i can do it in two ways, either
+        //  divide the Volume value by the decay, and remake it when (remake the flutter with that new number) flutter's remade anyways
+        //  divide the OriginalVolume by the decay *step* amount of times when it's called  <--- lets go with this one for now 
+        //well, evil third option
+        //  since i want to play all the notes in the tail, count the amount of numbers in the tail, and make the decay proportional to that, maybe a lerp from 1-0 ^2
+        //  maybe this is the good
+        
+        //anyways, when added, it'll set the stopwatch for the first time in according to the basetime, so, how does basetime ?
+        //basetime is set kinda randomly, between uhh, 6 and 18
+        //
+        //when updated, basetime will also be divided by propacceleration (proportional acceleration)
 
-        //Needs a rework, should check up with henp about creating and setting buffers and shit
-        //i want to be able to go like,, when going through the notes i can go like "ok,, i pick you up and you up"
-        //and when at the end of it i can deliver them like "alright, these notes will be the liaisons, fix em up for me"
-        //then it shall set it up under me to make that going (remember to remove the ones from previously), and then have them be the played notes now then.
+        //when stopwatch is 0 and thus updated and all, just do like, (int)basetime, ez.
+        
+        //so, big question how will the fluttertail be given,, well, what
+        //  lets just say it'll makes a list that's 2 to 5 long and that features notes that go 2 or 1 upwards or downwards (and that switches octaves)
+        //and also 4 upwards mode but only with  a big propacceleration
+        //in the future i want to make a big list of arrays that reads the note and ,... does shit
+        //  shit = uses the note as the key to pick one of many prewritten tails 
+        //  shit = have those tails actually be math variables, so that it can calculate a tail out of it.
 
-        //but now that i think about it, maybe it would be cool if it could sometimes arpegiate stuffs too.
-        //picture this, a wholey new liaison method (machinery), which you can add notes (only add removing will be hard and idk why) or clear all notes
-        //everytime you add a new thingy, it'll Analyse all the notes when a new one gets added, and assign a pitchindex 0 to x from lowest to highest
-        //i'll call this the idle notes
-        //you can switch its mode to be between arping all the notes or notes individually
-        // when arping as a collective it can pick between it can also arpegiate randomly, up and/or down
-        // randomly
-        //      totally randomly, picking one of the notes
-        // in order of melodic index. 
-        //      upwards
-        //      downwards
-        //      upwards-downwards-upwards-downwards-upwards-downwards-upwards
-        // 
-        // in order index
-        // individually 
-        // give each one a random float between 0 and 1 that is multiplied by something and made into an int, that's everyone's delay
+        public static class Dust
+        {
+            static List<Flutter> flutters = new List<Flutter>();
+            static List<int> slatedfordeletion = [];
+            public static void Update(VirtualMicrophone mic, PlopMachine plopmachine)
+            {
+                if ( flutters.Count != 0 )
+                {
+                    for (int i = 0; i < flutters.Count; i++)
+                    {
+                        Flutter flutter = flutters[i];
+                        if (flutter.stopwatch > 0)
+                        {
+                            int onelessnumbah = flutter.stopwatch - 1;
+                            flutters[i] = new Flutter(flutter.originalnote, flutter.fluttertail, onelessnumbah, flutter.step, flutter.basetime, flutter.propacceleration);
+                        }
+                        else
+                        {
+                            if (mic.soundObjects.Count < 21)
+                            {
+                                flutter.step++;
+                                plopmachine.Plip(flutter.fluttertail[flutter.step], 0.6f * Mathf.Lerp(1, 0, (float)flutter.step/flutter.fluttertail.Length), mic);
+                                flutter.stopwatch = (int)flutter.basetime;
+                                flutter.basetime *= flutter.propacceleration;
+                                if (flutter.step == flutter.fluttertail.Length-1) { slatedfordeletion.Add(i); }
+                            } //this is lovely actually! Flutter is only *after* the sounds have played
+                            else
+                            {
+                                Debug($"Waiting on a note {flutter.originalnote}, has the index: {i}, with there being {mic.soundObjects.Count} amount of sounds currently occuptying");
+                                flutter.stopwatch = (int)flutter.basetime*2;
+                                flutter.basetime *= 1.12f;
+                            }
+                            flutters[i] = new Flutter(flutter.originalnote, flutter.fluttertail, flutter.stopwatch, flutter.step, flutter.basetime, flutter.propacceleration);
+                        }
+                    }
+                    if (slatedfordeletion.Count != 0) 
+                    {
+                        slatedfordeletion.Reverse();    
+                        foreach(int deletion in slatedfordeletion)
+                        {
+                            Debug("Does delete " +  deletion);
+                            flutters.RemoveAt(deletion);
+                        }
+                        slatedfordeletion.Clear();
+                    }
+                }
+            }
+            public static void Add(string note) 
+            {
+                int TailLength = UnityEngine.Random.Range(3, 8);
+                string[] notetail = new string[TailLength];
+
+                string[] parts = note.Split('-');
+
+                string slib = parts[0]; //useless
+                int oct = int.Parse(parts[1]);
+                int ind = int.Parse(parts[2]);
+                
+                for (int i = 0; i < TailLength; i++)
+                {
+                    ind += UnityEngine.Random.Range(-3, 3);
+
+                    //while (1 > ind || ind > 7)
+                    //{
+                    if (ind > 7)
+                    {
+                        ind -= 7;
+                        oct++;
+                    }
+                    if (ind < 1)
+                    {
+                        ind += 7;
+                        oct--;
+                    }
+                    //}
+                    if (oct < 1) oct++;
+                    if (oct > 7) oct--;
+                    string construction = "S-" + Convert.ToString(oct) + "-" + Convert.ToString(ind);
+                    notetail[i] = construction;
+                }
+
+                //string[] notetail = { "S-4-5", "S-4-6", "S-4-7", "S-5-1" };
+
+                int randomint = UnityEngine.Random.Range(12, 32); //6, 22
+                float haha = UnityEngine.Random.Range(75, 135) / 100f;
+                Debug(haha);
+                Flutter helo = new Flutter(note, notetail, randomint, -1, randomint, haha);
+                flutters.Add(helo);
+            }
+        }
+
         struct Liaison
         {
             public Liaison(string note, int timer, int yoffset)
             {
                 this.note = note;
-                this.timer = timer;
+                this.stopwatch = timer;
                 this.yoffset = yoffset;
-            //    string[] hey = note.Substring(2).Split('-');//maybe this'll fuck up in the future :3
-            //    freqnumb = int.Parse(hey[0]) * 100 + int.Parse(hey[1]);
             }
             public string note;
-            public int timer;
+            public int stopwatch;
             public int yoffset;
-            //public int freqnumb; obsolete as they were only used once one place and therefore i can replace it with a better thing 
         
         }
-        //List<string[]> listtho = new List<string[]>();
+
         public static class IdleFetter
         {
-            //public static void constructor(){}
             static List<Liaison> LiaisonList = []; //list of the Liaison(s) currently playing
             static int[] liaisonrace = new int[0]; //arp pitch sorted array that will be remade with the analyze function
-            static int maxliaisons = 8; //self imposed limit on the amount of notes
+            //static readonly int maxliaisons = 8; //self imposed limit on the amount of notes
             static public bool isindividualistic = false; //setting for whether it'll treat things as individualistic
             static bool upperswitch = true;
             static int Idletimer = 0;
             static int uniqueyoffset = 0;
-            static public string arpingmode = "upwards";
+            public enum Arpmode
+            {
+                upwards,
+                downwards,
+                switchwards,
+                randomset
+            }
+            static public Arpmode arpingmode = Arpmode.upwards;
             static int arpstep = 0;
             static bool arpgoingupwards = false;
             static int arpcountdown = 20;
             static List<int> randomsetsacrificeboard = [];
+            //static List<string> nameshaha = [];
             
 
             //public Liaison slot3; //public Liaison slot4; //public Liaison slot5; //public Liaison slot6; //public Liaison slot7; //public Liaison slot8;
 
             public static void Update(VirtualMicrophone mic, PlopMachine plopmachine)
             {
-                //This method will presumably be the one to be called every frame when this is active, it'll thus be the one to update the timers
-                // but it won't update, well, timers *per sae*. this thing when call will then activate the method that's fitting, but....
-                // a revelation has befallen me that its JUST methods called in here, NOT the clocks
-                // 
-                //General notes:
-                // when switching over to collective mode, prompt an analyze
-                //
-                //will check what mode it is
-                //
-                
-
                 Idletimer++;
+                //if (LiaisonList.Count == 1) isindividualistic = true; //until a thing can grow horns on its own, it should stay like this... but then what if it could? What if a note had a chance to spawn others that fitted to it? Check that
+                //this is also now also decided in Add function, instead of making it a wholey other thing, becaaaaause i'm lazy... why? because this doesn't hold the door open for ^^^this expansion
                 if (isindividualistic) //upperswitch is true here
                 {
                     Anarchy(mic, plopmachine);
@@ -1397,74 +1482,62 @@ namespace PlopMachine
                     {
                         if (LiaisonList.Count != 0) //bruh why should it ever be less than zero lmao (that's the joke here)
                         {
-                            arpcountdown = (int)(Math.Cos(UnityEngine.Mathf.PerlinNoise(Idletimer / 400f, 7f + (Idletimer / 1600f)) * Math.PI) * -23 + 30);
+                            plopmachine.mygreen += 0.3f;
+                            arpcountdown = (int)(Math.Cos(UnityEngine.Mathf.PerlinNoise(Idletimer / 400f, 7f + (Idletimer / 1600f)) * Math.PI) * 27 + 47);
+                            arpcountdown = plopmachine.Peep(arpcountdown);
                             CollectiveArpStep(mic, plopmachine);
                         }
                     }
                 }
-
             }
 
-            private static void Anarchy(VirtualMicrophone mic, PlopMachine plopMachine)
+            private static void Anarchy(VirtualMicrophone mic, PlopMachine plopmachine)
             {
                 for (int i = 0; i < LiaisonList.Count; i++)
                 {
                     Liaison liaison = LiaisonList[i];
-                    if (liaison.timer > 0)
+                    if (liaison.stopwatch > 0)
                     {
-                        liaison.timer--;
-                        LiaisonList[i] = new Liaison(liaison.note, liaison.timer, liaison.yoffset);
+                        liaison.stopwatch--;
+                        LiaisonList[i] = new Liaison(liaison.note, liaison.stopwatch, liaison.yoffset);
                     }
                     else
                     {
-                        plopMachine.Plop(liaison.note, mic);
-                        int moneydym1 = (int)(Math.Cos(UnityEngine.Mathf.PerlinNoise(Idletimer / 400f, liaison.yoffset + (Idletimer / 1600f)) * Math.PI) * -100 + 110);
-                        moneydym1 = plopMachine.Peep(moneydym1);
+                        plopmachine.mygreen += 0.2f;
+                        plopmachine.Plop(liaison.note, mic);
+                        int moneydym1 = (int)(Math.Cos(UnityEngine.Mathf.PerlinNoise(Idletimer / 400f, liaison.yoffset + (Idletimer / 1600f)) * Math.PI) * 69 + 107);
+                        moneydym1 = plopmachine.Peep(moneydym1);
                         LiaisonList[i] = new Liaison(liaison.note, moneydym1, liaison.yoffset);
                         Debug($"We're so here, playing a {liaison.note}, and their {liaison.yoffset} makes a delay of {moneydym1}");
                     }
                 }
             }
-
             //https://www.ableton.com/en/manual/live-midi-effect-reference/
-            //private static void PlayNote()
-            //{
-            //    if (Lnote3.Contains("S-")) Ltime3 = Peeps(30, 120);
-            //    if (Lnote3.Contains("M-")) Ltime3 = Peeps(80, 200);
-            //    if (Lnote3.Contains("L-")) Ltime3 = Peeps(150, 300);
-            //}
-
-
 
             //int moneydym1 = (int)(Math.Cos(UnityEngine.Mathf.PerlinNoise(debugtimer / 400f, 00f + (debugtimer / 1600f)) * Math.PI) * -100 + 110);
 
             //collective mode
+            //https://stackoverflow.com/questions/47752/remove-duplicates-from-a-listt-in-c-sharp
             public static void Analyze(PlopMachine plopmachine)
             {
-                //will get all the notes of the liaison list
-                //then make each of them into a number, the higher the note, the higher the number, all inserted into a list 
-                //make another array which is created by turning all the notes into a "first place" in being lowest, lowest being 0,
-                //a new array will be made, which sorts by placement(1st, 2nd, 3rd) the indexes of anotherarray
-                //this array is liaisonrace, and is used when arpegiating as a collective
-                //this should always be called when the list is updated (add or wipe), because an old list is decrepit
-                //this is usefull for arping melodically
                 List<int> LiaisonsFreqNumbs = [];
-                List<int> LiaisonsIndex = [];
                 int index = 0;
                 foreach (Liaison heyo in LiaisonList)
                 {
                     string[] hey = heyo.note.Substring(2).Split('-');//maybe this'll fuck up in the future :3
                     int freqnumb = int.Parse(hey[0]) * 100 + plopmachine.IndexTOCKInt(int.Parse(hey[1]));
                     LiaisonsFreqNumbs.Add(freqnumb);
-                    LiaisonsIndex.Add(index);
-                    Debug($"Car warranty {freqnumb}, It's index in the LiaisonList: {index}");
+                    //Debug($"Car warranty {freqnumb}, It's index in the LiaisonList: {index}");
                     index++;
                 }//there's ceraintly a better and less costly ways of going about but :PPPPPP
 
+                int[] LiaisonIndexArrayThatllBeSwayed = new int[index];
+                for (int i = 0; i < index; i++)
+                    LiaisonIndexArrayThatllBeSwayed[i] = i;
+
                 int[] LiaisonsFreqNumbsArray = LiaisonsFreqNumbs.ToArray();
-                int[] LiaisonsIndexArrayThatllBeSwayed = LiaisonsIndex.ToArray();
-                Array.Sort(LiaisonsFreqNumbsArray, LiaisonsIndexArrayThatllBeSwayed);
-                liaisonrace = LiaisonsIndexArrayThatllBeSwayed;
+                Array.Sort(LiaisonsFreqNumbsArray, LiaisonIndexArrayThatllBeSwayed);
+                liaisonrace = LiaisonIndexArrayThatllBeSwayed;
             
             }
             public static void PrintRace()
@@ -1476,81 +1549,81 @@ namespace PlopMachine
                     Debug(i + " " + LiaisonList[i].note);
                 }
             }
-
             public static void Add(string note, PlopMachine plopmachine)
             {
+                //Debug("SOthestart of add");
+                string[] anotherhighernotesparts = note.Split('-');
+                //Debug(anotherhighernotesparts[0] + " " + anotherhighernotesparts[1]);
+                int octave = int.Parse(anotherhighernotesparts[0]);
+                int randomint = UnityEngine.Random.Range(octave, octave + 4);
+                if (2 <= randomint && randomint <= 4)
+                {
+                    Debug("Made it a shimmer power too");
+                    string shimmernote = "M-" + Convert.ToString(octave + 1) + "-" + anotherhighernotesparts[1];  //reminder that i want this to be dynamic
+                    uniqueyoffset += 10;
+                    Liaison sup = new Liaison(shimmernote, plopmachine.Peeps(30, 80), uniqueyoffset);
+                    LiaisonList.Add(sup);
+                };
+                bool willadd = true;
                 string mynote = "M-" + note;
-
-                Liaison helo = new Liaison(mynote, plopmachine.Peeps(30, 80), uniqueyoffset);
-                LiaisonList.Add(helo);
                 uniqueyoffset += 10;
-                //makes a new liaison with the note string
-                //give it a cordinate that's unique
-                //adds a liaison to the liaison
-                //IF IN COLLECTIVE MODE, prompts an Analyze
+                Liaison helo = new Liaison(mynote, plopmachine.Peeps(30, 80), uniqueyoffset);
+                
+                //checks there's no duplicates, doesn't add if so
+                foreach (Liaison thing in LiaisonList)
+                {
+                    if (thing.note == mynote) willadd = false;             
+                }//  
+                if (willadd) LiaisonList.Add(helo);
+
+
+                if (LiaisonList.Count < 3) {
+                    isindividualistic = true; }
+                else
+                {
+                    isindividualistic = UnityEngine.Random.Range(0, 100) > 44;
+                }
                 if (!isindividualistic) { Analyze(plopmachine); }
-                if (!isindividualistic) { Debug($"Added {mynote}, a {helo.note} with analysis"); } else { Debug($"Added {mynote}, a {helo.note} without analysis"); }
+                //if (!isindividualistic) { Debug($"Added {mynote}, a {helo.note} with analysis"); } else { Debug($"Added {mynote}, a {helo.note} without analysis"); }
             }
             public static void Wipe(PlopMachine plopmachine)
             { 
-                //clears the liaisonlist
-                //resets the CollectiveArpStep's step to 0
-                //IF IN COLLECTIVE MODE, prompts an analyze
                 LiaisonList.Clear();
                 arpstep = 0;
+                randomsetsacrificeboard.Clear();
                 if (!isindividualistic) { Analyze(plopmachine); }
             }
             public static void RandomMode()
             {
                 //switch statement that takes a number and changes
                 //arpingmode to be: "upwards" "downwards" "switchwards" "random" "randomset"
-                int sowhichoneboss = UnityEngine.Random.Range(0, 5);
-                switch (sowhichoneboss)
-                {
-                    case 0:
-                        arpingmode = "upwards";
-                        break;
-                    case 1:
-                        arpingmode = "downwards";
-                        break;
-                    case 2:
-                        arpingmode = "switchwards";
-                        break;
-                    case 3:
-                        arpingmode = "random";
-                        break;
-                    case 4:
-                        arpingmode = "randomset";
-                        break;
-                }
+                int sowhichoneboss = UnityEngine.Random.Range(0, 4);
+                arpingmode = (Arpmode)sowhichoneboss;
             }
             public static void CollectiveArpStep(VirtualMicrophone mic, PlopMachine plopMachine)
             {
                 //uses the logic of the mode selected by the string of arpingmode to *arp* between the notes,
                 //plays the note that it's selected, then selects the next one
-                //LiaisonList.Count();  arpstep     liasonrace
                 //so, arpstep is the current step in the arpegio, normal
                 //liaisonrace interprets the number and gives back another number which is the index of the note in liaison
                 //when picking an index from the liaisonlist, it returns a Liaison, that liaison has got properties, one of them is its note, which'll be a string.
 
                 //Debug($"it plays a thing at uhhhh   {arpstep},,,,   then it's the index  {liaisonrace[arpstep]}.. .  ..  {LiaisonList[liaisonrace[arpstep]].note}");
                 plopMachine.Plop(LiaisonList[liaisonrace[arpstep]].note, mic); //so it plays the previous one
-                //Debug("Hello so this one works" + Idletimer);
                 
-
                 switch (arpingmode)
                 {
-                    case "upwards":
+                    case Arpmode.upwards:
                         arpstep++;
                         if (arpstep >= LiaisonList.Count) { arpstep = 0; }
                         break;
 
-                    case "downwards":
+                    case Arpmode.downwards:
                         arpstep--;
                         if (arpstep < 0) { arpstep = LiaisonList.Count-1; }
                         break;
 
-                    case "switchwards":
+                    case Arpmode.switchwards:
                         if (arpgoingupwards)
                         {
                             arpstep++;
@@ -1571,11 +1644,7 @@ namespace PlopMachine
                         }
                         break;
 
-                    case "random":
-                        arpstep = UnityEngine.Random.Range(0, LiaisonList.Count);
-                        break;
-
-                    case "randomset":
+                    case Arpmode.randomset:
                         if (randomsetsacrificeboard.Count == 0)
                         {
                             foreach (int i in liaisonrace)
@@ -1596,127 +1665,47 @@ namespace PlopMachine
                         //Debug("So it's here");
                         //Debug("arpstep given is=" + arpstep);
                         break;
-
-
                 }
             }
         }
-            
-            //.cameras[0].virtualMicrophone
 
-        //private void Player_Update(On.Player.orig_Update orig, Player self, bool eu)
+        //.cameras[0].virtualMicrophone
+        //    public static Color blue => new Color(0f, 0f, 1f, 1f);
+        //Color mycolor = Color.blue;
+        Color mycolor = new(0f, 0f, 1f, 1f);
+        float myred;
+        float mygreen;
+        float myblue;
+        /*
+        these lines i write to
+        bring equality, and for
+        my love of haikus
+        */
         private void RainWorldGame_Update(On.RainWorldGame.orig_Update orig, RainWorldGame self)
         {
             orig(self);
             debugtimer++;
             var mic = self.cameras[0].virtualMicrophone;
             CurrentRegion = self.world.region.name;
-            
+            //Debug((int)(Math.Cos(UnityEngine.Mathf.PerlinNoise(debugtimer / 2000f, 7f + (debugtimer / 8000f)) * Math.PI) * 100));
 
-            //PlayEntry(mic);
+            PlayEntry(mic);
+            Dust.Update(mic, this);
 
             //Debug($"CurrentRegion is: {CurrentRegion}");
             if (CurrentRegion == null)
             {
                 CurrentRegion = "sl";
             }
-
-
-
-            //if (debugtimer % 160 == 00) { PlayThing(TriangleC4, mic, 1); }
-            //if (debugtimer % 160 == 20) { PlayThing(TriangleC4, mic, (float)Math.Pow(magicnumber, 4)); }
-            //if (debugtimer % 160 == 40) { PlayThing(TriangleC4, mic, (float)Math.Pow(magicnumber, 7)); }
-            //if (debugtimer % 160 == 60) { PlayThing(TriangleC4, mic, (float)Math.Pow(magicnumber, 11)); }
-
-            if (PatchTest)
+            mycolor = new(myred, mygreen, myblue, 1f);
+            myred   *= 0.97f;
+            mygreen *= 0.963f;
+            myblue  *= 0.94f;
+            if (myred == 0f && mygreen == 0f && myblue == 0f)
             {
-                if (debugtimer % 3000 == 000) { Plop("L-1-1", mic); }
-                if (debugtimer % 3000 == 015) { Plop("L-1-2", mic); }
-                if (debugtimer % 3000 == 030) { Plop("L-1-3", mic); }
-                if (debugtimer % 3000 == 045) { Plop("L-1-4", mic); }
-                if (debugtimer % 3000 == 060) { Plop("L-1-5", mic); }
-                if (debugtimer % 3000 == 075) { Plop("L-1-6", mic); }
-                if (debugtimer % 3000 == 090) { Plop("L-1-7", mic); }
-
-                if (debugtimer % 3000 == 200) { Plop("L-2-1", mic); }
-                if (debugtimer % 3000 == 215) { Plop("L-2-2", mic); }
-                if (debugtimer % 3000 == 230) { Plop("L-2-3", mic); }
-                if (debugtimer % 3000 == 245) { Plop("L-2-4", mic); }
-                if (debugtimer % 3000 == 260) { Plop("L-2-5", mic); }
-                if (debugtimer % 3000 == 275) { Plop("L-2-6", mic); }
-                if (debugtimer % 3000 == 290) { Plop("L-2-7", mic); }
-
-                if (debugtimer % 3000 == 400) { Plop("L-3-1", mic); }
-                if (debugtimer % 3000 == 415) { Plop("L-3-2", mic); }
-                if (debugtimer % 3000 == 430) { Plop("L-3-3", mic); }
-                if (debugtimer % 3000 == 445) { Plop("L-3-4", mic); }
-                if (debugtimer % 3000 == 460) { Plop("L-3-5", mic); }
-                if (debugtimer % 3000 == 475) { Plop("L-3-6", mic); }
-                if (debugtimer % 3000 == 490) { Plop("L-3-7", mic); }
-
-                if (debugtimer % 3000 == 600) { Plop("L-4-1", mic); }
-                if (debugtimer % 3000 == 615) { Plop("L-4-2", mic); }
-                if (debugtimer % 3000 == 630) { Plop("L-4-3", mic); }
-                if (debugtimer % 3000 == 645) { Plop("L-4-4", mic); }
-                if (debugtimer % 3000 == 660) { Plop("L-4-5", mic); }
-                if (debugtimer % 3000 == 675) { Plop("L-4-6", mic); }
-                if (debugtimer % 3000 == 690) { Plop("L-4-7", mic); }
-
-                if (debugtimer % 3000 == 800) { Plop("L-5-1", mic); }
-                if (debugtimer % 3000 == 815) { Plop("L-5-2", mic); }
-                if (debugtimer % 3000 == 830) { Plop("L-5-3", mic); }
-                if (debugtimer % 3000 == 845) { Plop("L-5-4", mic); }
-                if (debugtimer % 3000 == 860) { Plop("L-5-5", mic); }
-                if (debugtimer % 3000 == 875) { Plop("L-5-6", mic); }
-                if (debugtimer % 3000 == 890) { Plop("L-5-7", mic); }
-
-                if (debugtimer % 3000 == 1000) { Plop("L-6-1", mic); }
-                if (debugtimer % 3000 == 1015) { Plop("L-6-2", mic); }
-                if (debugtimer % 3000 == 1030) { Plop("L-6-3", mic); }
-                if (debugtimer % 3000 == 1045) { Plop("L-6-4", mic); }
-                if (debugtimer % 3000 == 1060) { Plop("L-6-5", mic); }
-                if (debugtimer % 3000 == 1075) { Plop("L-6-6", mic); }
-                if (debugtimer % 3000 == 1090) { Plop("L-6-7", mic); }
-
-                if (debugtimer % 3000 == 1200) { Plop("L-7-1", mic); }
-                if (debugtimer % 3000 == 1215) { Plop("L-7-2", mic); }
-                if (debugtimer % 3000 == 1230) { Plop("L-7-3", mic); }
-                if (debugtimer % 3000 == 1245) { Plop("L-7-4", mic); }
-                if (debugtimer % 3000 == 1260) { Plop("L-7-5", mic); }
-                if (debugtimer % 3000 == 1275) { Plop("L-7-6", mic); }
-                if (debugtimer % 3000 == 1290) { Plop("L-7-7", mic); }
-
-                if (debugtimer % 3000 > 1600) { PlayEntry(mic); }
+                myred = 0.02f;
             }
-            else
-            {
-                //PlayEntry(mic);
-                IdleFetter.isindividualistic = false;
-                //Debug("We got into here yo");
-
-                if (debugtimer % 1000000 == 201) IdleFetter.Add("4-3", this); //4 
-                if (debugtimer % 1000000 == 210) IdleFetter.Add("4-7", this); //4 
-                if (debugtimer % 1000000 == 235) IdleFetter.Add("3-5", this); //4 
-                if (debugtimer % 1000000 == 250) IdleFetter.Add("3-1", this); //4 
-                if (debugtimer % 1000000 == 275) IdleFetter.Add("5-3", this); //4 
-                if (debugtimer % 1000000 == 279) //4
-                {
-                    IdleFetter.Add("5-7", this); 
-                    IdleFetter.Analyze(this);
-                    IdleFetter.PrintRace();
-                }
-                IdleFetter.Update(mic, this);
-                //if (debugtimer % 1000000 == 1495) { IdleFetter.arpingmode = "downwards"; Debug("SWITCH"); }
-                //if (debugtimer % 1000000 == 2295) { IdleFetter.arpingmode = "switchwards"; Debug("SWITCH"); }
-                //if (debugtimer % 1000000 == 2995) { IdleFetter.arpingmode = "random"; Debug("SWITCH"); }
-                //if (debugtimer % 1000000 == 3305) { IdleFetter.arpingmode = "randomset"; Debug("SWITCH"); } 
-                //if (debugtimer % 1000000 == 4095) { IdleFetter.isindividualistic = true; Debug("BIG SWITCH"); }
-
-
-            }
-
-
-            
+            //Debug(mic.soundObjects.Count);
 
             //yoyo = Input.GetKey("1");
             //if (Input.GetKey("1") && !yoyo)
@@ -1729,14 +1718,25 @@ namespace PlopMachine
 
             if (Input.GetKey("1") && !yoyo)
             {
-                QueuedModulation = -2;
+                QueuedModulation = 2;
                 PushModulation();
             }
             yoyo = Input.GetKey("1");
             if (Input.GetKey("2") && !yoyo2)
             {
-                QueuedModulation = 2;
-                PushModulation();
+                if (inmajorscale)
+                {
+                    inmajorscale = false;
+                    Debug("Minor scale now");
+                    //weplipping = false;
+                }
+                else
+                {
+                    inmajorscale = true;
+                    Debug("Major scale now");
+                    //weplipping = true;
+                }
+
             }
             yoyo2 = Input.GetKey("2");
 
