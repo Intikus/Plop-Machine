@@ -1445,8 +1445,11 @@ namespace PlopMachine
                 {//modulation
                     int keybefore = plopmachine.CurrentKey;
                     bool scalebefore = plopmachine.inmajorscale;
+                    plopmachine.QueuedModulation = 2;
                     plopmachine.InfluenceModulation();
+                    plopmachine.QueuedModulation = 2;
                     plopmachine.InfluenceModulation();
+                    plopmachine.QueuedModulation = 2;
                     plopmachine.InfluenceModulation();
                     differencebuffer = plopmachine.CurrentKey - keybefore;
                     hasswitchedscales = scalebefore == plopmachine.inmajorscale;
@@ -1540,7 +1543,6 @@ namespace PlopMachine
                     arptimer--;
                     if (isstrumming)
                     {
-                        Debug("UH IT*S STRUMMING??????");
                         Strum(mic, plopmachine);
                     }
                     else
@@ -1570,7 +1572,7 @@ namespace PlopMachine
                                                                                           //the drawback of this is that the two notes will Only be played simultaneously. if i want to make them lightly strummed, i would have to have the next one played at another thing...
                                                                                           //I've come to the revelation that i don't need to make it return string and all that, i'm keeping it here for a bit just for safekeeping, anyways. i can make this activate another mechanism that does another collectivearpstep only 1-4 frames afterwards.
 
-                                if (UnityEngine.Random.Range(0, 150000) + TensionStopwatch > 150000) //RTYU      this is strum activationcode  //temp, will share with other. I decide now that if it's strummed, it'll roll a chance to break, but reset the "stopwatch" both use, tension   
+                                if (UnityEngine.Random.Range(0, 150000) + TensionStopwatch > 150000) //RTYU            this is strum activationcode  //temp, will share with other. I decide now that if it's strummed, it'll roll a chance to break, but reset the "stopwatch" both use, tension   
                                 {
                                     isstrumming = true;
                                     strumphase = Strumphases.queued;
@@ -1973,8 +1975,9 @@ namespace PlopMachine
                         }
                         else
                         {
-                            plopmachine.Plop("M-" + LiaisonList[liaisonrace[strumindex]], mic);
-                            strumtimer = (int)plopmachine.fichtean * 3 + 1;  //which is essentially //perlinnoise(1, 4) (1, 2, 3)
+                            //Debug("It's the funny it's so playing :))))" + strumindex +"   ummm"+ liaisonrace[strumindex] +"   ummmm"+ LiaisonList[liaisonrace[strumindex]]);
+                            plopmachine.Plop(LiaisonList[liaisonrace[strumindex]].note, mic);
+                            strumtimer = (int)(plopmachine.fichtean * 4);  //which is essentially //perlinnoise(1, 4) (1, 2, 3)
                             if (strumdirectionupwards) { strumindex++; }
                             else { strumindex--; }
 
