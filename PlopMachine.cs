@@ -30,7 +30,14 @@ namespace PlopMachine
             On.RainWorldGame.Update += RainWorldGame_Update; //actually usefull
             //On.PlayerGraphics.DrawSprites += hehedrawsprites;
             On.RainWorldGame.ctor += RainWorldGame_ctor; //actually usefull 
+            On.AmbientSoundPlayer.TryInitiation += AmbientSoundPlayer_TryInitiation;
         }
+
+        private void AmbientSoundPlayer_TryInitiation(On.AmbientSoundPlayer.orig_TryInitiation orig, AmbientSoundPlayer self)
+        {
+            //fuckoff
+        }
+
         readonly float magicnumber = 1.0594630776202568303519954093385f;
         int CurrentKey = 0;
         int QueuedModulation = 0;
@@ -179,12 +186,13 @@ namespace PlopMachine
         float riffd;
         int upcomingdelay;
 
-        bool weplipping = true;
+        //bool weplipping = true;
         //stopwatches go upwards
         //timers go downwards
 
         float fichtean;
         float chordexhaustion = 1f;
+        int chordsequenceiteration;
         // int chordwait;
 
 
@@ -197,28 +205,6 @@ namespace PlopMachine
         //float distancetovibeepicentre = 0;
 
         //float intensity = 1.0f;
-
-        //AudioReverbPreset[] thepresets = [AudioReverbPreset.Off, AudioReverbPreset.Generic, AudioReverbPreset.PaddedCell, AudioReverbPreset.Room, AudioReverbPreset.Bathroom, AudioReverbPreset.Livingroom, AudioReverbPreset.Stoneroom, AudioReverbPreset.Auditorium, AudioReverbPreset.Concerthall, AudioReverbPreset.Cave, AudioReverbPreset.Arena, AudioReverbPreset.Hangar, AudioReverbPreset.CarpetedHallway, AudioReverbPreset.Hallway, AudioReverbPreset.StoneCorridor, AudioReverbPreset.Alley, AudioReverbPreset.Forest, AudioReverbPreset.City, AudioReverbPreset.Mountains, AudioReverbPreset.Quarry, AudioReverbPreset.Plain, AudioReverbPreset.ParkingLot, AudioReverbPreset.SewerPipe, AudioReverbPreset.Underwater, AudioReverbPreset.Drugged, AudioReverbPreset.Dizzy, AudioReverbPreset.Psychotic, AudioReverbPreset.User];
-        /*
-        float IntikusdecayHFRatio = 0.5f;
-        float IntikusdecayTime = 1f;
-        float Intikusdensity = 1f;
-        float Intikusdiffusion = 1f;
-        float IntikusdryLevel = 1f;
-        float IntikushfReference = 1f;
-        float IntikuslfReference = 1f;
-        float IntikusreflectionsDelay = 1f;
-        float IntikusreflectionsLevel = 1f;
-        float IntikusreverbDelay = 1f;
-        float IntikusreverbLevel = 1f;
-        float IntikusreverbPreset = 1f;
-        float Intikusroom = 1f;
-        float IntikusroomHF = 1f;
-        float IntikusroomLF = 1f;
-        */
-        float[] RangeAdjs = new float[13];
-        //[0.1f, 0.2f, 0.5f, 1f, 2f, 5f, 10f, 50f, 100f, 500f, 1000f, 2000f, 5000f];
-        //float[] ack = [IntikusdecayHFRatio, IntikusdecayTime, Intikusdensity, Intikusdiffusion, IntikusdryLevel, IntikushfReference, IntikuslfReference, IntikusreflectionsDelay, IntikusreflectionsLevel, IntikusreverbDelay, IntikusreverbLevel, IntikusreverbPreset, Intikusroom, IntikusroomHF, IntikusroomLF]
 
         public static class EnumExt_AudioFilters
         {
@@ -246,13 +232,13 @@ namespace PlopMachine
         private void RainWorldGame_ctor(On.RainWorldGame.orig_ctor orig, RainWorldGame self, ProcessManager manager)
         {
             orig.Invoke(self, manager);
-            StartthefuckingWaitDict();
-            NoteMagazine.fuckinginitthatdictlineagebitch();
             Debug("SupDude");
             try
             {
                 if (!fileshavebeenchecked)
                 {
+                    StartthefuckingWaitDict();
+                    NoteMagazine.fuckinginitthatdictlineagebitch();
                     Debug("Checking files");
                     string[] mydirs = AssetManager.ListDirectory("soundeffects", false, true);
                     Debug("Printing all directories in soundeffects");
@@ -656,7 +642,7 @@ namespace PlopMachine
             int oct = int.Parse(parts[1]);
             int ind;
             bool intiseasy = int.TryParse(parts[2], out ind);
-            //if (weplipping) if (intiseasy) if (3 == UnityEngine.Random.Range(1, 4)) Dust.Add(input, this);
+            //if (weplipping) if (intiseasy) if (3 == UnityEngine.Random.Range(1, 4)) Dust.Add(input, this); //HALTERED
 
             //Debug($"So the string is {s}, which counts as {parts.Length} amounts of parts. {slib}, {oct}, {ind}");
 
@@ -920,22 +906,27 @@ namespace PlopMachine
                 //int madeupchordcountdown = Peeps(low, high);
                 //chordtimer = madeupchordcountdown * 4;
 
-                chordexhaustion = (chordexhaustion * 2) + Mathf.Lerp(2f, 0.5f, fichtean);
                 
                 float feelingtoplay = UnityEngine.Random.Range(0, 1001) / 1000f;
-                float threshholdtoplay = 0.9f - (fichtean * 0.9f) + chordexhaustion * 0.08f; //will be tweaked probs
+                float threshholdtoplay = 0.77f - (fichtean * 0.48f) + chordexhaustion * 0.08f + chordsequenceiteration * 0.2f; //will be tweaked probs
                 bool chordissequenced = feelingtoplay > threshholdtoplay;
+                Debug($"Chord is getting played with a {threshholdtoplay} threshhold");
                 if (chordissequenced)
                 {
-                    Debug("Chord sequenced a thing" + chordexhaustion);
+                    chordexhaustion = (chordexhaustion * 1.325f) + Mathf.Lerp(1.75f, 0.55f, fichtean);
+                    Debug("Chord sequenced their thing:" + chordexhaustion);
                     float sequencedwait = UnityEngine.Random.Range(100, 500 - (int)(fichtean * 375)) / 100f;
                     chordtimer = Wait.Until("half", (int)sequencedwait, debugstopwatch);
+                    chordsequenceiteration++;
                 }
                 else
                 {
+                    chordexhaustion = (chordexhaustion * 2) + Mathf.Lerp(1.5f, 0.5f, fichtean);
                     //Debug("Chord waited a bar " + (int)chordexhaustion);
                     //Debug("Chord waited a bar " + Wait.Until("bar", (int)chordexhaustion, debugstopwatch));
+                    Debug("New Chord Played");
                     chordtimer = Wait.Until("bar", (int)chordexhaustion, debugstopwatch);
+                    chordsequenceiteration = 0;
                 }
 
                 if (liaisonnotes == "0")
@@ -1220,40 +1211,7 @@ namespace PlopMachine
                 SoundLoader.SoundData soundData = virtualMicrophone.GetSoundData(Note, -1);
                 if (virtualMicrophone.SoundClipReady(soundData))
                 {
-
                     var thissound = new VirtualMicrophone.DisembodiedSound(virtualMicrophone, soundData, pan, vol, pitch, false, 0);
-
-                    /*
-                    var reverb = thissound.gameObject.AddComponent<AudioReverbFilter>();
-                    reverb.reverbPreset = thepresets[lel];
-
-
-                    //reverb.room             = 10000*((float)Math.Pow(intensity, 0.75)-1);
-                    //reverb.reflectionsLevel = 10000*((float)Math.Pow(intensity, 0.75)-1);
-                    //reverb.dryLevel         = 10000*((float)Math.Pow((-intensity+1.0), 0.75)-1);
-                    
-                    reverb.decayHFRatio         = revbvalues[0];
-                    reverb.decayTime            = revbvalues[1];
-                    reverb.density              = revbvalues[2];
-                    reverb.diffusion            = revbvalues[3];
-                    reverb.dryLevel             = revbvalues[4];
-                    reverb.hfReference          = revbvalues[5];
-                    reverb.lfReference          = revbvalues[6];
-                    reverb.reflectionsDelay     = revbvalues[7];
-                    reverb.reflectionsLevel     = revbvalues[8];
-                    reverb.reverbDelay          = revbvalues[9];
-                    reverb.reverbLevel          = revbvalues[10];
-                    reverb.reverbPreset         = AudioReverbPreset.User;
-                    reverb.room                 = revbvalues[12];
-                    reverb.roomHF               = revbvalues[13];
-                    reverb.roomLF               = revbvalues[14];
-                    */
-
-                    //Debug(10000*((float)Math.Pow(intensity, 0.75)-1));
-                    //Debug(10000*((float)Math.Pow((-intensity+1.0), 0.75)-1));
-
-                    //var delay = thissound.gameObject.AddComponent<AudioEchoFilter>();
-
                     virtualMicrophone.soundObjects.Add(thissound);
                 }
                 else
@@ -1622,8 +1580,8 @@ namespace PlopMachine
 
                                 CollectiveArpStep(mic, plopmachine);
 
-                                int randomint = UnityEngine.Random.Range(LiaisonList.Count, LiaisonList.Count + 11);
-                                if (randomint >= 14) CollectiveArpStep(mic, plopmachine); //the sequel, the second note that plucks with the first, this shall only have a CHANCE when at many numbers
+                                //int randomint = UnityEngine.Random.Range(LiaisonList.Count, LiaisonList.Count + 11);       HALTERED AWAY FOR NOW
+                                //if (randomint >= 14) CollectiveArpStep(mic, plopmachine); //the sequel, the second note that plucks with the first, this shall only have a CHANCE when at many numbers
                                                                                           //the drawback of this is that the two notes will Only be played simultaneously. if i want to make them lightly strummed, i would have to have the next one played at another thing...
                                                                                           //I've come to the revelation that i don't need to make it return string and all that, i'm keeping it here for a bit just for safekeeping, anyways. i can make this activate another mechanism that does another collectivearpstep only 1-4 frames afterwards.
 
@@ -1864,7 +1822,7 @@ namespace PlopMachine
                 //if (returnnoteinstead) return LiaisonList[liaisonrace[arpstep]].note; 
                 Debug("Playing a Plop from Chitchat.CollectiveArpStep");
                 plopmachine.Plop(LiaisonList[liaisonrace[arpstep]].note, mic); //so it plays the previous one
-                CheckThisLiaisonOutDude(liaisonrace[arpstep], plopmachine);
+                //CheckThisLiaisonOutDude(liaisonrace[arpstep], plopmachine); //HALTERED, SEE IF WORKS LATER
 
                 switch (arpingmode)
                 {
@@ -2079,17 +2037,38 @@ namespace PlopMachine
             public static void fuckinginitthatdictlineagebitch()
             {
                 SoloLineageDict.Add("fuckineedtofindouthowtowritethishere", "Ambientynote|Chordy Notes");
-                SoloLineageDict.Add("4-1", "4-1 4-5|4-4 4-3");
-                //LineageDict.Add("fuckineedtofindouthowtowritethishere", ["Ambientynote", "Chordy Notes"] );
-
-
+                SoloLineageDict.Add("4-1", "3-5 4-1 4-3 4-5|3-6 4-2 4-4");
+                SoloLineageDict.Add("4-2", "3-6 4-2 4-5 4-6|3-4 4-1 4-3 4-4");
+                SoloLineageDict.Add("4-3", "3-6 4-2 4-3 4-6 5-1|3-7 4-3 4-4 4-7");
+                SoloLineageDict.Add("4-4", "3-5 4-1 4-4 4-5 5-3|3-5 4-2 4-5 5-2");
+                SoloLineageDict.Add("4-5", "4-1 4-5 5-1 5-3 5-5|4-2 4-6 4-7 5-3 5-6");
+                SoloLineageDict.Add("4-6", "4-6 5-1 5-2 5-3 5-6 4-2|4-3 4-5 5-2 5-4");
+                SoloLineageDict.Add("4-7", "3-3 3-7 4-1 4-5 4-7|3-6 4-2 4-4 4-5");
 
                 //yeahhh and then the second one !
                 DuoLineageDict.Add("timeforsecondof painyo", "yeah|yeah");
-                //ok so a good trick with making bass notes would be that long spaced apart inputs i think would be the ones between a bass and note, generally. so maybe be biased to the top. thought the notes are randomly picked :/// whatevs hehe 
-                //Reminder that everything starts at 4
-                DuoLineageDict.Add("4-1 4-5", "4-4 4-1 4-5|4-6 5-3 4-1");
-
+                //DuoLineageDict.Add("4-1 4-5", "4-4 4-1 4-5|4-6 5-3 4-1");
+                DuoLineageDict.Add("4-1 4-2", "3-5 4-1 4-2 4-3 4-6 5-2|3-7 4-1 4-2 4-4 4-6 5-3");
+                DuoLineageDict.Add("4-1 4-3", "3-6 4-1 4-3 4-5 5-2|3-6 4-4 4-5 4-6");
+                DuoLineageDict.Add("4-1 4-4", "3-5 4-1 4-4 4-6 5-3|4-2 4-5 4-6 5-2");
+                DuoLineageDict.Add("4-1 4-5", "3-5 4-1 4-5 5-1 5-3|4-2 4-4 4-5 4-7 5-2");
+                DuoLineageDict.Add("4-1 4-6", "3-5 4-2 4-5 5-1 5-5|3-5 4-2 4-5 5-1");
+                DuoLineageDict.Add("4-1 4-7", "4-1 4-5 4-7 5-2|4-2|4-5 4-7 5-1 5-2");
+                DuoLineageDict.Add("4-2 4-3", "3-6 4-2 4-3 4-6 5-2|3-2 4-2 4-4 4-5 5-2");
+                DuoLineageDict.Add("4-2 4-4", "3-6 4-2 4-4 5-4|3-7 4-3 4-7 5-1");
+                DuoLineageDict.Add("4-2 4-5", "4-2 4-5 4-7 5-2|3-7 4-6 5-3 5-5");
+                DuoLineageDict.Add("4-2 4-6", "3-5 4-2 4-5 4-6 5-2|3-6 4-3 4-7 5-3");
+                DuoLineageDict.Add("4-2 4-7", "3-5 4-2 4-3 4-7|4-3 4-5 5-1 5-5");
+                DuoLineageDict.Add("4-3 4-4", "3-6 4-3 4-4 4-6 5-3|3-7 4-5 5-1 5-4");
+                DuoLineageDict.Add("4-3 4-5", "3-5 4-3 4-5 5-3 5-7|4-1 4-2 4-4 4-6 5-2");
+                DuoLineageDict.Add("4-3 4-6", "4-1 4-3 4-6 5-5|3-5 4-1 4-6 5-1");
+                DuoLineageDict.Add("4-3 4-7", "3-6 4-3 4-7 5-3|4-4 4-6 5-1 5-3 5-5");
+                DuoLineageDict.Add("4-4 4-5", "3-5 4-1 4-4 4-5 5-6|4-2 4-6 5-1 5-2");
+                DuoLineageDict.Add("4-4 4-6", "3-5 4-1 4-4 4-6 5-3 5-6|3-6 4-4 4-6 5-1 5-4 5-7");
+                DuoLineageDict.Add("4-4 4-7", "3-5 4-4 4-6 4-7 5-3|3-7 4-3 4-5 5-4");
+                DuoLineageDict.Add("4-5 4-6", "3-6 4-5 4-6 5-2 5-6|4-1 4-5 4-7 5-5");
+                DuoLineageDict.Add("4-5 4-7", "3-5 4-1 4-5 4-7 5-5|3-4 3-7 4-4 4-6 5-4");
+                DuoLineageDict.Add("4-6 4-7", "3-5 4-2 4-6 4-7 5-3 5-5|3-4 3-7 4-3 4-5 5-1 5-4");
             }
             //don't be scared of the lowest notes, oct 1 will be rolled up.
             //i'll use octave 4 as the baseline
@@ -2112,176 +2091,97 @@ namespace PlopMachine
             }
             public static void AddBullet(string Note)
             {
-                OutNoteList.Add(Note);
+                //OutNoteList.Add(Note);
                 InNoteList.Add(Note);
             }
             public static void Fester(PlopMachine plopmachine)
             {//(it is time to create the outnotes.) (very expensive here)
-                if (!hasdecidedamount) { decidedamount = (int)Mathf.Lerp(6.5f, 2f, plopmachine.fichtean); hasdecidedamount = true; }
-                //if (!hasdecidedamount) { decidedamount = 0; hasdecidedamount = true; }
+                //if (!hasdecidedamount) { decidedamount = (int)Mathf.Lerp(6.5f, 2f, plopmachine.fichtean); hasdecidedamount = true; }
+                if (!hasdecidedamount) { decidedamount = 0; hasdecidedamount = true; } //HALTERED
                 Debug("Amount of things it's wanting" + decidedamount);
                 while (OutNoteList.Count < decidedamount && triedamounts < 10)
                 {
-                    bool gonnadomultiple;
-                    if (InNoteList.Count == 1) { gonnadomultiple = false; }
-                    else { gonnadomultiple = UnityEngine.Random.Range(0, 2) == 1; }
-
-                    if (!gonnadomultiple) Grow(plopmachine);
-                    else Grows(plopmachine);
+                    Grows(plopmachine);
                     triedamounts++;
                     Debug("Attempt " + triedamounts);
                 }
                 triedamounts = 0;
                 Push(plopmachine);
             }
-            private static void Grow(PlopMachine plopmachine)
-            {
-                //Wrote this code while i was close to the heavens, don't expect it to be well
-                //SoloLineageDict.Add("4-1", "4-1 4-5|4-4 4-3");
-
-                //taking a "3-1" as an example
-                string nicenote = InNoteList[UnityEngine.Random.Range(0, InNoteList.Count)];
-                //ohshiti'mjustdoingthethingagain,, maybe i should make it an int int thing already...
-
-                string[] parts = nicenote.Split('-');
-
-                int seedoct = int.Parse(parts[0]);
-                bool intiseasy = int.TryParse(parts[1], out int seedind);
-                string seedextras = "";
-                if (!intiseasy)
-                {
-                    seedind = int.Parse(parts[1].Substring(0, 1));
-                    seedextras = parts[1].Substring(1);
-                }
-                //so if i have a 3 it'll be -1
-                int intsohowfarawayfromfourahahahahahahhaahyknowtosaveitandstuff = seedoct - 4;
-
-                string fedconstruct = "4-" + parts[1].Substring(0, 1);
-                bool itisthere = SoloLineageDict.TryGetValue(fedconstruct, out string thedamned);
-
-                int oct;
-                int ind;
-                if (itisthere)
-                {// 4-1 4-5|4-4 4-3
-                    string[] heavenorhell = thedamned.Split('|');
-                    float bias = Mathf.Pow(-Mathf.Cos(plopmachine.fichtean * Mathf.PI), 0.52f) / 2 + 0.5f;
-                    float doesthechurchallowit = UnityEngine.Random.Range(0, 100001) / 100000f;
-                    int martinlutherking;
-                    if (bias > doesthechurchallowit) { martinlutherking = 1; } else { martinlutherking = 0; }
-                    string whichonewillyouchoose = heavenorhell[martinlutherking];
-                    string[] thebegotten = whichonewillyouchoose.Split(' ');
-                    string theone = thebegotten[UnityEngine.Random.Range(0, thebegotten.Length)];
-                    string[] theparts = theone.Split('-');
-                    int theoct = int.Parse(theparts[0]);
-                    ind = int.Parse(theparts[1]);
-                    //so a 3  and then   like from a 3   would be 2
-                    oct = theoct + intsohowfarawayfromfourahahahahahahhaahyknowtosaveitandstuff;
-                }
-                else
-                {
-                    oct = seedoct;
-                    ind = seedind;
-                }
-
-                string construction;
-                if (intiseasy) construction = Convert.ToString(oct) + "-" + Convert.ToString(ind);
-                else construction = Convert.ToString(oct) + "-" + Convert.ToString(ind) + seedextras;
-
-                Debug($"Created a {construction}");
-
-                bool existsinhere = false;
-                foreach (string seed in InNoteList)
-                { if (construction == seed) existsinhere = true; }
-                if (!existsinhere) InNoteList.Add(construction);
-                existsinhere = false;
-                foreach (string bullet in OutNoteList)
-                { if (construction == bullet) existsinhere = true; }
-                if (!existsinhere) OutNoteList.Add(construction);
-            }
             //----------------------------------------------------------------------------------------------------
             private static void Grows(PlopMachine plopmachine)
             {
-                string nicenote = InNoteList[UnityEngine.Random.Range(0, InNoteList.Count)];
-                string guynote;
-                int hah = 0;
-                do
-                {
-                    guynote = InNoteList[UnityEngine.Random.Range(0, InNoteList.Count)];
-                    hah++;
-                } while (nicenote == guynote || hah < 10);
+                string Note1 = InNoteList[UnityEngine.Random.Range(0, InNoteList.Count)];
+                string Note2 = InNoteList[UnityEngine.Random.Range(0, InNoteList.Count)];
 
-                string[] parts = nicenote.Split('-');
-                int seedoct = int.Parse(parts[0]);
-                bool intiseasy = int.TryParse(parts[1], out int seedind);
-                string seedextras = "";
-                if (!intiseasy)
+                string[] Break1 = Note1.Split('-');
+                int Octave1 = int.Parse(Break1[0]);
+                bool HasNoExtras1 = int.TryParse(Break1[1], out int Index1);
+                string Extras1 = "";
+                if (!HasNoExtras1)
                 {
-                    seedind = int.Parse(parts[1].Substring(0, 1));
-                    seedextras = parts[1].Substring(1);
+                    Index1 = int.Parse(Break1[1].Substring(0, 1));
+                    Extras1 = Break1[1].Substring(1);
                 }
-                //so if i have a 3 it'll be -1
-                int intsohowfarawayfromfourahahahahahahhaahyknowtosaveitandstuff = seedoct - 4;
-
-
-                string[] otherparts = guynote.Split('-');
-                int otherseedoct = int.Parse(parts[0]);
-                bool otherintiseasy = int.TryParse(parts[1], out int otherseedind);
-                if (!otherintiseasy)
+                string[] Break2 = Note2.Split('-');
+                int Octave2 = int.Parse(Break2[0]);
+                bool HasNoExtras2 = int.TryParse(Break2[1], out int Index2);
+                string Extras2 = "";
+                if (!HasNoExtras2)
                 {
-                    otherseedind = int.Parse(parts[2].Substring(0, 1));
+                    Index2 = int.Parse(Break2[1].Substring(0, 1));
+                    Extras2 = Break2[1].Substring(1);
                 }
 
-                int howmuchaboverelative = otherseedoct - seedoct;  // if  first,second:  4,3  , this'll be -1   , other 0
-                                                                    // if  first,second:  4,6  , this'll be 2, other 0
-                                                                    // if first second:   2,5  , this'll be 3, other -2
-                string fedconstruct;  //note fucking fix this 
-                if (howmuchaboverelative == 0) fedconstruct = $"{4 - howmuchaboverelative}-{parts[1].Substring(0, 1)} {Convert.ToString(4 - howmuchaboverelative - intsohowfarawayfromfourahahahahahahhaahyknowtosaveitandstuff)}-{Convert.ToString(otherseedind)}";
-                else fedconstruct = $"{Convert.ToString(4 - howmuchaboverelative - intsohowfarawayfromfourahahahahahahhaahyknowtosaveitandstuff)}-{Convert.ToString(otherseedind)} {4 - howmuchaboverelative}-{parts[1].Substring(0, 1)}";
-
-                //if howmuchaboverelative is a number, this should swap
-
-                string thedamned;
-                bool firstattemptworked = DuoLineageDict.TryGetValue(fedconstruct, out thedamned);
-
-                //we're trying to get something to thedamned
-                int oct;
-                int ind;
-                if (firstattemptworked)
+                bool TheyTheSame = true;
+                if (Octave1 == Octave2) TheyTheSame = Index1 == Index2;
+                string LowNote;
+                string HighNote;
+                string HighExtras;
+                int HighFourDelta;
+                if (Index1 > Index2 || Octave1 > Octave2)
                 {
-                    string[] heavenorhell = thedamned.Split('|');
-                    float bias = Mathf.Pow(-Mathf.Cos(plopmachine.fichtean * Mathf.PI), 0.52f) / 2 + 0.5f;
-                    float doesthechurchallowit = UnityEngine.Random.Range(0, 100001) / 100000f;
-                    int martinlutherking;
-                    if (bias > doesthechurchallowit) { martinlutherking = 1; } else { martinlutherking = 0; }
-                    string whichonewillyouchoose = heavenorhell[martinlutherking];
-                    string[] thebegotten = whichonewillyouchoose.Split(' ');
-                    string theone = thebegotten[UnityEngine.Random.Range(0, thebegotten.Length)];
-                    string[] theparts = theone.Split('-');
-                    int theoct = int.Parse(theparts[0]);
-                    ind = int.Parse(theparts[1]);
-                    //so a 3  and then   like from a 3   would be 2
-                    oct = theoct + intsohowfarawayfromfourahahahahahahhaahyknowtosaveitandstuff + howmuchaboverelative;
+                    HighNote = $"4-{Index1}";
+                    HighExtras = Extras1;
+                    LowNote = $"4-{Index2}";
+                    HighFourDelta = Octave1 - 4;
                 }
                 else
                 {
-                    oct = seedoct;
-                    ind = seedind;
+                    HighNote = $"4-{Index2}";
+                    HighExtras = Extras2;
+                    LowNote = $"4-{Index1}";
+                    HighFourDelta = Octave2 - 4;
+                }
+                string NoteValue;
+                if (TheyTheSame) { _ = DuoLineageDict.TryGetValue(HighNote, out NoteValue); }
+                else
+                {
+                    string NoteKey = $"{LowNote}-{HighNote}";
+                    _ = DuoLineageDict.TryGetValue(NoteKey, out NoteValue);
                 }
 
-                string construction;
-                if (intiseasy) construction = Convert.ToString(oct) + "-" + Convert.ToString(ind);
-                else construction = Convert.ToString(oct) + "-" + Convert.ToString(ind) + seedextras;
-                if (firstattemptworked) Debug($"Succesfully Constructed a {construction})"); else Debug($"Mistakingly Constructed a {construction})");
+                string[] heavenorhell = NoteValue.Split('|');
+                float bias = Mathf.Pow(-Mathf.Cos(plopmachine.fichtean * Mathf.PI), 0.52f) / 2 + 0.5f;
+                float doesthechurchallowit = UnityEngine.Random.Range(0, 100001) / 100000f;
+                int martinlutherking;
+                if (bias > doesthechurchallowit) { martinlutherking = 1; } else { martinlutherking = 0; }
+                string whichonewillyouchoose = heavenorhell[martinlutherking];
+                string[] thebegotten = whichonewillyouchoose.Split(' ');
+                string theone = thebegotten[UnityEngine.Random.Range(0, thebegotten.Length)];
+                string[] FinalNoteParts = theone.Split('-');
+
+                int FinalOct = int.Parse(FinalNoteParts[0]) + HighFourDelta;
+                string FinalNote = $"{FinalOct}-{FinalNoteParts[1]}{HighExtras}";
 
                 bool existsinhere = false;
                 foreach (string seed in InNoteList)
-                { if (construction == seed) existsinhere = true; }
-                if (!existsinhere) InNoteList.Add(construction);
+                { if (FinalNote == seed) existsinhere = true; }
+                if (!existsinhere) InNoteList.Add(FinalNote);
                 existsinhere = false;
                 foreach (string bullet in OutNoteList)
-                { if (construction == bullet) existsinhere = true; }
-                if (!existsinhere) OutNoteList.Add(construction);
-                //this is the worst code i've ever written and idk how to fix because idc too much.
+                { if (FinalNote == bullet) existsinhere = true; }
+                if (!existsinhere) OutNoteList.Add(FinalNote);
             }
             public static void Push(PlopMachine plopmachine)
             {
@@ -2338,22 +2238,13 @@ namespace PlopMachine
 
             WaitDict.Add("defult", 24); //this is definetly not how to go about it but whatevs henp can correct me later lol
         }
-        //
-        //
-        //
         public class Wait
         {
             private static int Leftof(string waittype, int atthistimeofday) //localized entirely within your kitchen
             {
                 bool diditgetit = WaitDict.TryGetValue(waittype, out int waitvalue);
-                if (diditgetit)
-                {
-                    return (waitvalue - (atthistimeofday % waitvalue) - 1);
-                }
-                else
-                {
-                    return (24 - (atthistimeofday % 24) - 1);
-                }
+                if (diditgetit) { return waitvalue - (atthistimeofday % waitvalue) - 1; }
+                else { return 24 - (atthistimeofday % 24) - 1; }
             }
 
             public static int Until(string waittype, int waits, int atthistimeofyear) //atthistimeofyear = debugstopwatch
@@ -2395,6 +2286,9 @@ namespace PlopMachine
         //        sprite.color = mycolor;
         //    }
         //}
+        bool switchbetweentwonumbers;
+        bool yoyo;
+        float thenumber = 0.05f;
         private void RainWorldGame_Update(On.RainWorldGame.orig_Update orig, RainWorldGame self)
         {
             orig(self);
@@ -2403,14 +2297,24 @@ namespace PlopMachine
             CurrentRegion = self.world.region.name;
             CurrentRegion ??= "sl";
 
-            fichtean = Mathf.PerlinNoise(debugstopwatch / 4000f, debugstopwatch / 16000f);
-            Debug("Fichtean: " + fichtean + " Yeah");
-            Debug("Chordexhaustion: " + chordexhaustion + " Yeah");
+            //fichtean = Mathf.PerlinNoise(debugstopwatch / 4000f, debugstopwatch / 16000f);
+            fichtean = thenumber;
+            //Debug("Fichtean: " + fichtean + " Yeah");
+            //Debug("Chordexhaustion: " + chordexhaustion + " Yeah");
             PlayEntry(mic);
             Dust.Update(mic, this);
 
             //if (Wait.Until("bar", 1, debugstopwatch) == 1) { Plip("L-5-1", mic); }
-            //if (Wait.Until("quarter", 1, debugstopwatch) == 1) { Plip("S-3-1", mic); }
+            if (Wait.Until("quarter", 1, debugstopwatch) == 23) //it's not 1,  it wouldn't start at 0, 0 is set so that the very next one is the action, max-1 is the start
+            { 
+                if (Wait.Until("bar", 1, debugstopwatch) == 95)
+                
+                            Plip("S-6-1", 0.6f, mic); 
+                else 
+                            Plip("S-5-1", 0.6f, mic); 
+                
+                //Debug("Fourth"); 
+            } 
             //if (Wait.Until("1/3", 1, debugstopwatch) == 1) { Plop("S-3-5", mic); }
 
 
@@ -2425,6 +2329,25 @@ namespace PlopMachine
             //    myred = 0.06f;
             //}
             //mycolor = new(myred, mygreen, myblue, 1f);
+
+            
+            if (Input.GetKey("9") && !yoyo)
+            {
+                if (switchbetweentwonumbers)
+                {
+                    thenumber = 0.05f;
+                    switchbetweentwonumbers = false;
+                    Debug("Fichtean is now 0.05");
+                }
+                else
+                {
+                    thenumber = 0.95f;
+                    switchbetweentwonumbers = true;
+                    Debug("Fichtean is now 0.95");
+                }
+            }
+            yoyo = Input.GetKey("9");
+
         }
 
         public static readonly SoundID HelloC = new SoundID("HelloC", register: true);
