@@ -635,7 +635,7 @@ namespace PlopMachine
         }
         private void Plop(string input, VirtualMicrophone mic)
         {
-            Debug("It plays the plop " + input);
+            //Debug("It plays the plop " + input);
             string[] parts = input.Split('-');
 
             string slib = parts[0]; //either L for Long, M for Medium, or S for Short
@@ -861,7 +861,6 @@ namespace PlopMachine
                 myred += 2f;
                 InfluenceModulation();
                 ChitChat.Wipe(this);
-                ChitChat.RandomMode();
                 EntryRequest = false;
                 entrychord = false;
                 string[] inst = chordnotes.Split(',');
@@ -943,6 +942,7 @@ namespace PlopMachine
                     }
                 }
                 NoteMagazine.Fester(this);
+                ChitChat.RandomMode();
                 playingchord = true;
                 //Debug($"Info given of: Timer: {low} {high}, {chordtimer}, And times: {Ltime1}, {Ltime2}, {Ltime3}, and Key {CurrentKey} of chord (put another name here)... {Debug}");
             }
@@ -966,8 +966,7 @@ namespace PlopMachine
                     chordtimer--;
                 }
             }
-            //Debug("Done with Playingchord");
-
+            
             if (EntryRequest == true && entryriff == true)
             {
                 EntryRequest = false;
@@ -1511,7 +1510,7 @@ namespace PlopMachine
                                    //if (LiaisonList.Count == 1) isindividualistic = true; //until a thing can grow horns on its own, it should stay like this... but then what if it could? What if a note had a chance to spawn others that fitted to it? Check that
                                    //this is also now also decided in Add function, instead of making it a wholey other thing, becaaaaause i'm lazy... why? because this doesn't hold the door open for ^^^this expansion
                 evolvestopwatch++;
-                if (UnityEngine.Random.Range(0, 3000000) + TensionStopwatch > 3000000 && !hasbroken) //RTYU                           //temporary, it's gonna be a chance activation later. olololooooooool lol ooooooo lo  lol   looo 
+                if (UnityEngine.Random.Range(0, 3000000) + TensionStopwatch*4 > 3000000 && !hasbroken) //RTYU                           //temporary, it's gonna be a chance activation later. olololooooooool lol ooooooo lo  lol   looo 
                 {
                     TensionStopwatch = 0;
                     Break(plopmachine);
@@ -1519,7 +1518,7 @@ namespace PlopMachine
                 if (hasbroken)
                 {
                     BreakUndoStopwatch++;
-                    if (UnityEngine.Random.Range(0, 150001) + BreakUndoStopwatch > 150000)//RTYU 120
+                    if (UnityEngine.Random.Range(0, 150001) + BreakUndoStopwatch*3 > 150000)//RTYU 120
                     {
                         if (UnityEngine.Random.Range(0, 12) + (int)((1 - plopmachine.fichtean) * 4) <= 4)
                         {
@@ -1554,8 +1553,7 @@ namespace PlopMachine
                                 CollectiveArpStep(mic, plopmachine);
                                 plopmachine.mygreen += 0.3f;
                                 strumstopwatch += plopmachine.fichtean * 20 + 1;
-                                int haha = (int)(Mathf.PerlinNoise((float)strumstopwatch / 2000f, (float)strumstopwatch / 8000f) * 5);
-                                Debug(haha);
+                                int haha = (int)(Mathf.PerlinNoise((float)strumstopwatch / 500f, (float)strumstopwatch / 2000f) * 5);
                                 switch (haha)
                                 {            
                                     case 0: arptimer = Wait.Until("1/4" , 1, plopmachine.debugstopwatch) + 1; break;
@@ -1777,14 +1775,17 @@ namespace PlopMachine
             public static void RandomMode()
             {
                 //switch statement that takes a number and changes
-                //arpingmode to be: "upwards" "downwards" "switchwards" "random" "randomwards"
-                int sowhichoneboss = UnityEngine.Random.Range(0, 4);
+                //arpingmode to be: "upwards" "downwards" "switchwards" "randomwards" "inwards" "outwards"
+                //int sowhichoneboss = UnityEngine.Random.Range(0, 6);
+                int sowhichoneboss = UnityEngine.Random.Range(4, 6);
                 arpingmode = (Arpmode)sowhichoneboss;
+                Debug("The arping mode has been chosen to be " + arpingmode);
                 arpmiddlenoteistop = UnityEngine.Random.Range(0, 2) == 1;
-
+                
                 float pseudoarpstep = LiaisonList.Count / 2;
                 arpindexabovemidline = (int)Math.Ceiling(pseudoarpstep) - 1;
                 arpindexbelowmidline = (int)Math.Floor(pseudoarpstep) - 1;
+                //OKAY SO SIDE NOTE TO MYSELF, always call randommode AFTER you've found out how many things there are in here
             }
             public static void CollectiveArpStep(VirtualMicrophone mic, PlopMachine plopmachine)
             {
@@ -1798,7 +1799,7 @@ namespace PlopMachine
 
                 //public static string CollectiveArpStep(VirtualMicrophone mic, PlopMachine plopmachine, bool returnnoteinstead = false)
                 //if (returnnoteinstead) return LiaisonList[liaisonrace[arpstep]].note; 
-                Debug("Playing a Plop from Chitchat.CollectiveArpStep");
+                Debug("Playing a Plop from Chitchat.CollectiveArpStep, the " + arpstep);
                 plopmachine.Plop(LiaisonList[liaisonrace[arpstep]].note, mic); //so it plays the previous one
                 //CheckThisLiaisonOutDude(liaisonrace[arpstep], plopmachine); //HALTERED, SEE IF WORKS LATER
 
@@ -1848,32 +1849,6 @@ namespace PlopMachine
                         randomsetsacrificeboard.RemoveAt(thesacrifice);
                         break;
 
-                    case Arpmode.outwards:
-                        if (arpgoingupwards)
-                        {
-                            arpstep++;
-                            if (arpstep >= LiaisonList.Count)
-                            { //this fucks up and returns a negative value  if  liaisonlist.count = 1
-                                //float pseudoarpstep = LiaisonList.Count / 2;
-                                if (arpmiddlenoteistop)
-                                    arpstep = arpindexbelowmidline;//(int)Math.Floor(pseudoarpstep) - 1;
-                                else
-                                    arpstep = arpindexabovemidline;// (int)Math.Ceiling(pseudoarpstep) - 1;
-                                arpgoingupwards = false;
-                            }
-                        }
-                        else
-                        {
-                            arpstep--;
-                            if (arpstep < 0)
-                            {
-                                if (arpmiddlenoteistop) arpstep = arpindexabovemidline;
-                                else arpstep = arpindexbelowmidline;
-                                arpgoingupwards = true;
-                            }
-                        }
-                        break;
-
                     case Arpmode.inwards:
                         int lookoutfor;
                         if (arpgoingupwards)
@@ -1897,6 +1872,32 @@ namespace PlopMachine
                             {
                                 arpgoingupwards = true;
                                 arpstep = 0;
+                            }
+                        }
+                        break;
+
+                    case Arpmode.outwards:
+                        if (arpgoingupwards)
+                        {
+                            arpstep++;
+                            if (arpstep >= LiaisonList.Count)
+                            { //this fucks up and returns a negative value  if  liaisonlist.count = 1
+                                //float pseudoarpstep = LiaisonList.Count / 2;
+                                if (arpmiddlenoteistop)
+                                    arpstep = arpindexbelowmidline;//(int)Math.Floor(pseudoarpstep) - 1;
+                                else
+                                    arpstep = arpindexabovemidline;// (int)Math.Ceiling(pseudoarpstep) - 1;
+                                arpgoingupwards = false;
+                            }
+                        }
+                        else
+                        {
+                            arpstep--;
+                            if (arpstep < 0)
+                            {
+                                if (arpmiddlenoteistop) arpstep = arpindexabovemidline;
+                                else arpstep = arpindexbelowmidline;
+                                arpgoingupwards = true;
                             }
                         }
                         break;
@@ -2287,8 +2288,8 @@ namespace PlopMachine
             fichtean = thenumber;
             //Debug("Fichtean: " + fichtean + " Yeah");
             //Debug("Chordexhaustion: " + chordexhaustion + " Yeah");
-            PlayEntry(mic);
-            Dust.Update(mic, this);
+            if (debugstopwatch > 300) PlayEntry(mic);
+            if (debugstopwatch > 300) Dust.Update(mic, this);
 
             //if (Wait.Until("bar", 1, debugstopwatch) == 1) { Plip("L-5-1", mic); }
             if (Wait.Until("quarter", 1, debugstopwatch) == 23) //it's not 1,  it wouldn't start at 0, 0 is set so that the very next one is the action, max-1 is the start
