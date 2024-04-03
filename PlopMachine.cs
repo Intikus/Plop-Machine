@@ -1540,6 +1540,7 @@ namespace PlopMachine
                     arptimer--;
                     if (isstrumming)
                     {
+                        Debug("UH IT*S STRUMMING??????");
                         Strum(mic, plopmachine);
                     }
                     else
@@ -1548,44 +1549,28 @@ namespace PlopMachine
                         {
                             if (LiaisonList.Count != 0) //bruh why should it ever be less than zero lmao (that's the joke here)
                             {
+                                CollectiveArpStep(mic, plopmachine);
                                 plopmachine.mygreen += 0.3f;
                                 strumstopwatch += plopmachine.fichtean * 20 + 1;
-                                int haha = (int)Mathf.PerlinNoise((float)strumstopwatch / 2000f, (float)strumstopwatch / 8000f) * 5;
+                                int haha = (int)(Mathf.PerlinNoise((float)strumstopwatch / 2000f, (float)strumstopwatch / 8000f) * 5);
+                                Debug(haha);
                                 switch (haha)
-                                {
-                                    case 0:
-                                        arptimer = Wait.Until("1/4", 1, plopmachine.debugstopwatch);
-                                        break;
-
-                                    case 1:
-                                        arptimer = Wait.Until("1/6", 1, plopmachine.debugstopwatch);
-                                        break;
-
-                                    case 2:
-                                        arptimer = Wait.Until("1/8", 1, plopmachine.debugstopwatch);
-                                        break;
-
-                                    case 3:
-                                        arptimer = Wait.Until("1/12", 1, plopmachine.debugstopwatch);
-                                        break;
-
-                                    case 4:
-                                        arptimer = Wait.Until("1/16", 1, plopmachine.debugstopwatch);
-                                        break;
-
-                                    case 5:
-                                        arptimer = Wait.Until("1/16", 1, plopmachine.debugstopwatch);
-                                        break;
-                                }
-
-                                CollectiveArpStep(mic, plopmachine);
+                                {            
+                                    case 0: arptimer = Wait.Until("1/4" , 1, plopmachine.debugstopwatch) + 1; break;
+                                    case 1: arptimer = Wait.Until("1/6" , 1, plopmachine.debugstopwatch) + 1; break;
+                                    case 2: arptimer = Wait.Until("1/8" , 1, plopmachine.debugstopwatch) + 1; break;
+                                    case 3: arptimer = Wait.Until("1/12", 1, plopmachine.debugstopwatch) + 1; break;
+                                    case 4: arptimer = Wait.Until("1/16", 1, plopmachine.debugstopwatch) + 1; break;
+                                    case 5: arptimer = Wait.Until("1/16", 1, plopmachine.debugstopwatch) + 1; break;
+                                } //PLUSS ONE because its' fucking... because this one plays it at the exact same time??? And goes downward for some reason??? Oh wait it's because it starts HERE. At THIS MOMENT, if it was a wait, there would be 24 until the next.
+                                //Debug("OK SO THE NEXT ONE IS " + arptimer);
 
                                 //int randomint = UnityEngine.Random.Range(LiaisonList.Count, LiaisonList.Count + 11);       HALTERED AWAY FOR NOW
                                 //if (randomint >= 14) CollectiveArpStep(mic, plopmachine); //the sequel, the second note that plucks with the first, this shall only have a CHANCE when at many numbers
                                                                                           //the drawback of this is that the two notes will Only be played simultaneously. if i want to make them lightly strummed, i would have to have the next one played at another thing...
                                                                                           //I've come to the revelation that i don't need to make it return string and all that, i'm keeping it here for a bit just for safekeeping, anyways. i can make this activate another mechanism that does another collectivearpstep only 1-4 frames afterwards.
 
-                                if (UnityEngine.Random.Range(0, 150000) + TensionStopwatch < 150000) //RTYU      this is strum activationcode  //temp, will share with other. I decide now that if it's strummed, it'll roll a chance to break, but reset the "stopwatch" both use, tension   
+                                if (UnityEngine.Random.Range(0, 150000) + TensionStopwatch > 150000) //RTYU      this is strum activationcode  //temp, will share with other. I decide now that if it's strummed, it'll roll a chance to break, but reset the "stopwatch" both use, tension   
                                 {
                                     isstrumming = true;
                                     strumphase = Strumphases.queued;
@@ -1693,20 +1678,11 @@ namespace PlopMachine
                 string[] anotherhighernotesparts = note.Split('-');
                 //Debug(anotherhighernotesparts[0] + " " + anotherhighernotesparts[1]);
                 int octave = int.Parse(anotherhighernotesparts[0]);
-                int randomint = UnityEngine.Random.Range(octave, octave + 4);
-                //if (2 <= randomint && randomint <= 4)
-                //{
-                //    Debug("Made it a shimmer power too");
-                //    string shimmernote = "M-" + Convert.ToString(octave + 1) + "-" + anotherhighernotesparts[1];  //reminder that i want this to be dynamic
-                //    uniqueyoffset += 10;
-                //    Liaison sup = new Liaison(shimmernote, plopmachine.Peeps(30, 80), uniqueyoffset);
-                //    LiaisonList.Add(sup);
-                //};
 
                 bool willadd = true;
                 string mynote = "M-" + note;
                 uniqueyoffset += 10;
-                Liaison helo = new Liaison(mynote, plopmachine.Peeps(30, 80), uniqueyoffset);
+                Liaison helo = new Liaison(mynote, 40, uniqueyoffset);
 
                 //checks there's no duplicates, doesn't add if so
                 foreach (Liaison thing in LiaisonList)
@@ -1717,7 +1693,7 @@ namespace PlopMachine
                 if (willadd) { LiaisonList.Add(helo); Debug("Has Added: " + mynote); }
 
                 if (LiaisonList.Count < 3) { isindividualistic = true; }
-                else { isindividualistic = UnityEngine.Random.Range(0, 100) > 44; }
+                else { isindividualistic = UnityEngine.Random.Range(0, 100) < 4; }
 
                 if (!isindividualistic) { Analyze(plopmachine); }
                 //if (!isindividualistic) { Debug($"Added {mynote}, a {helo.note} with analysis"); } else { Debug($"Added {mynote}, a {helo.note} without analysis"); }
@@ -2096,8 +2072,8 @@ namespace PlopMachine
             }
             public static void Fester(PlopMachine plopmachine)
             {//(it is time to create the outnotes.) (very expensive here)
-                //if (!hasdecidedamount) { decidedamount = (int)Mathf.Lerp(6.5f, 2f, plopmachine.fichtean); hasdecidedamount = true; }
-                if (!hasdecidedamount) { decidedamount = 0; hasdecidedamount = true; } //HALTERED
+                if (!hasdecidedamount) { decidedamount = (int)Mathf.Lerp(6.5f, 2f, plopmachine.fichtean); hasdecidedamount = true; }
+                //if (!hasdecidedamount) { decidedamount = 0; hasdecidedamount = true; } //HALTERED
                 Debug("Amount of things it's wanting" + decidedamount);
                 while (OutNoteList.Count < decidedamount && triedamounts < 10)
                 {
@@ -2154,13 +2130,18 @@ namespace PlopMachine
                     HighFourDelta = Octave2 - 4;
                 }
                 string NoteValue;
-                if (TheyTheSame) { _ = DuoLineageDict.TryGetValue(HighNote, out NoteValue); }
+                bool TheOneThatDiscards;
+                if (TheyTheSame) 
+                {
+                    if (UnityEngine.Random.Range(0, 3) == 0) { TheOneThatDiscards = SoloLineageDict.TryGetValue(LowNote, out NoteValue); }
+                    else { TheOneThatDiscards = SoloLineageDict.TryGetValue(HighNote, out NoteValue); }
+                }
                 else
                 {
-                    string NoteKey = $"{LowNote}-{HighNote}";
-                    _ = DuoLineageDict.TryGetValue(NoteKey, out NoteValue);
+                    string NoteKey = $"{LowNote} {HighNote}";
+                    TheOneThatDiscards = DuoLineageDict.TryGetValue(NoteKey, out NoteValue);
                 }
-
+                _ = TheOneThatDiscards;
                 string[] heavenorhell = NoteValue.Split('|');
                 float bias = Mathf.Pow(-Mathf.Cos(plopmachine.fichtean * Mathf.PI), 0.52f) / 2 + 0.5f;
                 float doesthechurchallowit = UnityEngine.Random.Range(0, 100001) / 100000f;
@@ -2172,9 +2153,11 @@ namespace PlopMachine
                 string[] FinalNoteParts = theone.Split('-');
 
                 int FinalOct = int.Parse(FinalNoteParts[0]) + HighFourDelta;
+                if (FinalOct > 7) { FinalOct = UnityEngine.Random.Range(3, 7); }
                 string FinalNote = $"{FinalOct}-{FinalNoteParts[1]}{HighExtras}";
 
                 bool existsinhere = false;
+                Debug("Pushing a " + FinalNote+"note");
                 foreach (string seed in InNoteList)
                 { if (FinalNote == seed) existsinhere = true; }
                 if (!existsinhere) InNoteList.Add(FinalNote);
@@ -2189,7 +2172,7 @@ namespace PlopMachine
                 foreach (string bullet in OutNoteList)
                 {
                     ChitChat.Add(bullet, plopmachine);
-                    Debug($"Pushed a {bullet}");
+                    Debug($"Pushed a {bullet}Thing");
                 }
                 InNoteList.Clear();
                 OutNoteList.Clear();
@@ -2313,7 +2296,7 @@ namespace PlopMachine
                 else 
                             Plip("S-5-1", 0.6f, mic); 
                 
-                //Debug("Fourth"); 
+                Debug("Fourth"); 
             } 
             //if (Wait.Until("1/3", 1, debugstopwatch) == 1) { Plop("S-3-5", mic); }
 
