@@ -7,7 +7,9 @@
 // [ADD]HelloB/vol=0.2 : karmaPitchEchoF/pitch=3
 
 
-
+[ADD]Kick : Kick
+[ADD]Snare : Snare
+[ADD]HiHat : HiHat
 
 [ADD]Hello/vol=0.2 : karmaPitchEchoF
 [ADD]Hellob/vol=0.2 : karmaPitchEchoA
