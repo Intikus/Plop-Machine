@@ -6,14 +6,8 @@ using System.Security;
 using UnityEngine;
 using System.IO;
 using System.Runtime.CompilerServices;
-using System.Runtime.InteropServices;
-using UnityEngine.Rendering;
-using System.Collections;
-using System.Linq;
-using UnityEngine.PlayerLoop;
+using System.Runtime.Remoting.Metadata.W3cXsd2001;
 //using System.Diagnostics;
-using System.Runtime.Remoting.Messaging;
-using IL.ScavengerCosmetic;
 
 [module: UnverifiableCode]
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -231,7 +225,6 @@ namespace PlopMachine
         private void RainWorldGame_ctor(On.RainWorldGame.orig_ctor orig, RainWorldGame self, ProcessManager manager)
         {
             orig.Invoke(self, manager);
-            Debug("SupDude");
             Debug("   ##                         ");
             Debug("   ##    ###                  ");
             Debug(" .###%######             #####");
@@ -246,7 +239,6 @@ namespace PlopMachine
             Debug("  ###    ###                  ");
             Debug("   ##      ####               ");
             Debug("   ###       ##               ");
-            Debug("Thanks, Arena.");
             try
             {
                 if (!fileshavebeenchecked)
@@ -828,7 +820,7 @@ namespace PlopMachine
                     chordtimer--;
                 }
             }
-            
+            /*
             if (EntryRequest == true && entryriff == true)
             {
                 EntryRequest = false;
@@ -1039,6 +1031,7 @@ namespace PlopMachine
                     }
                 }
             }
+            */
         }
         private void PlayThing(SoundID Note, float velocity, float speed, VirtualMicrophone virtualMicrophone)
         {
@@ -1140,15 +1133,19 @@ namespace PlopMachine
         }
         struct Liaison
         {
-            public Liaison(string note, int stopwatch, int yoffset)
+            public Liaison(string note, int stopwatch, bool[] pattern, int patternindex, string period)
             {
                 this.note = note;
                 this.stopwatch = stopwatch;
-                this.yoffset = yoffset;
+                this.pattern = pattern;
+                this.patternindex = patternindex;
+                this.period = period;
             }
             public string note;
             public int stopwatch;
-            public int yoffset;
+            public bool[] pattern;
+            public int patternindex;
+            public string period;
         }
         public static class ChitChat
         {
@@ -1231,7 +1228,7 @@ namespace PlopMachine
                     {
                         Liaison liaison = LiaisonList[i];
                         string newnote = string.Concat(liaison.note, appendedaccidentals);
-                        LiaisonList[i] = new Liaison(newnote, liaison.stopwatch, liaison.yoffset);
+                        LiaisonList[i] = new Liaison(newnote, liaison.stopwatch, liaison.pattern, liaison.patternindex, liaison.period);
                     }
                 }
             }
@@ -1251,7 +1248,7 @@ namespace PlopMachine
                     {
                         Liaison liaison = LiaisonList[i];
                         string unduednote = liaison.note.Substring(0, 3);
-                        LiaisonList[i] = new Liaison(unduednote, liaison.stopwatch, liaison.yoffset);
+                        LiaisonList[i] = new Liaison(unduednote, liaison.stopwatch, liaison.pattern, liaison.patternindex, liaison.period);
                     }
                 }
             }
@@ -1267,6 +1264,7 @@ namespace PlopMachine
                     TensionStopwatch = 0;
                     Break(plopmachine);
                 }
+
                 if (hasbroken)
                 {
                     BreakUndoStopwatch++;
@@ -1279,6 +1277,7 @@ namespace PlopMachine
                         BreakUndoStopwatch = 0;
                     }
                 }
+
                 if (isindividualistic) //upperswitch is true here
                 {
                     Anarchy(mic, plopmachine);
@@ -1286,11 +1285,13 @@ namespace PlopMachine
                 }
                 else //shall be false here
                 {
+
                     if (upperswitch)
                     {
                         Analyze(plopmachine);
                         upperswitch = false;
                     }
+
                     if (isstrumming)
                     {
                         Strum(mic, plopmachine);
@@ -1349,26 +1350,26 @@ namespace PlopMachine
                     if (liaison.stopwatch > 0)
                     {
                         liaison.stopwatch--;
-                        LiaisonList[i] = new Liaison(liaison.note, liaison.stopwatch, liaison.yoffset);
+                        LiaisonList[i] = new Liaison(liaison.note, liaison.stopwatch, liaison.pattern, liaison.patternindex, liaison.period);
                     }
                     else
                     {
                         plopmachine.mygreen += 0.2f;
                         //Debug("Playing a note from Chitchat.Anarchy");
-                        plopmachine.Plop(liaison.note, mic);
-                        int moneydym1 = (int)((Math.Cos(Mathf.PerlinNoise(ChitChatStopwatch / 40f, liaison.yoffset + ChitChatStopwatch / 160f) * Math.PI)+0.5) * 6) + 1;
-                        int thing = (int)(plopmachine.fichtean * 5);
-                        int liaisonwait;
-                        switch (thing)
+                        if (liaison.pattern[liaison.patternindex])
                         {
-                            case 0: liaisonwait = Wait.Until("1/2",  moneydym1, plopmachine.debugstopwatch); break;
-                            case 1: liaisonwait = Wait.Until("1/3",  moneydym1, plopmachine.debugstopwatch); break;
-                            case 2: liaisonwait = Wait.Until("1/4",  moneydym1, plopmachine.debugstopwatch); break;
-                            case 3: liaisonwait = Wait.Until("1/6",  moneydym1, plopmachine.debugstopwatch); break;
-                            case 4: liaisonwait = Wait.Until("1/8",  moneydym1, plopmachine.debugstopwatch); break;
-                            default: liaisonwait = Wait.Until("1/8", moneydym1, plopmachine.debugstopwatch); break;
+                            plopmachine.Plop(liaison.note, mic);
+                            string lol = "";
+                            foreach(bool thing in liaison.pattern)
+                            {
+                                lol += thing;
+                            }
+                            //Debug("haha "+ lol);
                         }
-                        LiaisonList[i] = new Liaison(liaison.note, liaisonwait, liaison.yoffset);
+                        int liaisonwait = Wait.Until(liaison.period, 1, plopmachine.debugstopwatch);
+                        int lolol = liaison.patternindex + 1;
+                        if (lolol >= liaison.pattern.Length) lolol = 0; 
+                        LiaisonList[i] = new Liaison(liaison.note, liaisonwait, liaison.pattern, lolol, liaison.period);
                         CheckThisLiaisonOutDude(i, plopmachine);
                         //Debug($"We're so here, playing a {liaison.note}, and their {liaison.yoffset} makes a delay of {moneydym1}");
                     }
@@ -1446,19 +1447,26 @@ namespace PlopMachine
 
                 bool willadd = true;
                 string mynote = "M-" + note;
-                uniqueyoffset += 10;
                 int thing = (int)(plopmachine.fichtean * 5);
-                int liaisonwait;
+                string period;
                 switch (thing)
                 {
-                    case 0: liaisonwait = Wait.Until("1/2", UnityEngine.Random.Range(1,4), plopmachine.debugstopwatch); break;
-                    case 1: liaisonwait = Wait.Until("1/3", UnityEngine.Random.Range(1,4), plopmachine.debugstopwatch); break;
-                    case 2: liaisonwait = Wait.Until("1/4", UnityEngine.Random.Range(1,4), plopmachine.debugstopwatch); break;
-                    case 3: liaisonwait = Wait.Until("1/6", UnityEngine.Random.Range(1,4), plopmachine.debugstopwatch); break;
-                    case 4: liaisonwait = Wait.Until("1/8", UnityEngine.Random.Range(1,4), plopmachine.debugstopwatch); break;
-                    default:liaisonwait = Wait.Until("1/8", UnityEngine.Random.Range(1,4), plopmachine.debugstopwatch); break;
+                    case 0: period = "1/16";break;
+                    case 1: period = "1/12";break;
+                    case 2: period = "1/8";break;
+                    case 3: period = "1/6";break;
+                    case 4: period = "1/4";break;
+                    default:period = "1/6";break;
                 }
-                Liaison helo = new Liaison(mynote, liaisonwait, uniqueyoffset);
+                int liaisonwait = Wait.Until(period, 1, plopmachine.debugstopwatch);
+                int amountoftimes = UnityEngine.Random.Range(8 - (int)(plopmachine.fichtean * 3), 29 - (int)(plopmachine.fichtean * 15));
+                bool[] mama = new bool[amountoftimes];
+                for (int i = 0; i < amountoftimes; i++)
+                {
+                    mama[i] = UnityEngine.Random.Range(0, (int)(plopmachine.fichtean*16) + 35) > 32;
+                }
+
+                Liaison helo = new Liaison(mynote, liaisonwait, mama, UnityEngine.Random.Range(0, amountoftimes), period);
 
                 //checks there's no duplicates, doesn't add if so
                 foreach (Liaison thisliaison in LiaisonList)
@@ -1468,7 +1476,7 @@ namespace PlopMachine
 
                 if (willadd) { LiaisonList.Add(helo); }
                 if (LiaisonList.Count < 3) { isindividualistic = true; }
-                else { isindividualistic = UnityEngine.Random.Range(0, 100) < 4; }
+                else { isindividualistic = UnityEngine.Random.Range(0, 100) < 8+(int)(plopmachine.fichtean*16); }
                 if (!isindividualistic) { Analyze(plopmachine); }
                 //if (!isindividualistic) { Debug($"Added {mynote}, a {helo.note} with analysis"); } else { Debug($"Added {mynote}, a {helo.note} without analysis"); }
             }
@@ -1792,8 +1800,8 @@ namespace PlopMachine
             static int decidedamount;
             static int
                 triedamounts;
-            static Dictionary<string, string> SoloLineageDict = new(); //one at a time kid
-            static Dictionary<string, string> DuoLineageDict = new(); //thanks dad it's time for duo
+            static readonly Dictionary<string, string> SoloLineageDict = new(); //one at a time kid
+            static readonly Dictionary<string, string> DuoLineageDict = new(); //thanks dad it's time for duo
             public static void fuckinginitthatdictlineagebitch()
             {
                 SoloLineageDict.Add("fuckineedtofindouthowtowritethishere", "Ambientynote|Chordy Notes");
@@ -2053,8 +2061,11 @@ namespace PlopMachine
         //    }
         //}
         bool switchbetweentwonumbers;
+        bool switchbetweentwoothernumbers = true;
         bool yoyo;
         bool yoyo2;
+        bool yoyo3;
+        int theothernumber = 11;
         static int SimulationNumber;
         float thenumber = 0.05f;
         private void RainWorldGame_Update(On.RainWorldGame.orig_Update orig, RainWorldGame self)
@@ -2066,7 +2077,7 @@ namespace PlopMachine
             CurrentRegion ??= "sl";
 
             fichtean = Mathf.PerlinNoise(debugstopwatch / 1000f, debugstopwatch / 4000f);
-            //fichtean = thenumber;
+            fichtean = thenumber;
             //Debug("Fichtean: " + fichtean + " Yeah");
             //Debug("Chordexhaustion: " + chordexhaustion + " Yeah");
             PlayEntry(mic);
@@ -2085,7 +2096,7 @@ namespace PlopMachine
             //    
             //    //Debug("Fourth"); 
             //}
-            if (Wait.Until("eight", 1, debugstopwatch) == 11)
+            if (Wait.Until("eight", 1, debugstopwatch) == theothernumber)
             {
                 if (Wait.Until("quarter", 1, debugstopwatch) == 23)
                 {
@@ -2128,11 +2139,11 @@ namespace PlopMachine
             //    myred = 0.06f;
             //}
             //mycolor = new(myred, mygreen, myblue, 1f);
-            if (Input.GetKey("8") && !yoyo2)
+            if (Input.GetKey("7") && !yoyo3)
             {
                 SimulationNumber++;
             }
-            yoyo2 = Input.GetKey("8");
+            yoyo3 = Input.GetKey("7");
 
 
             if (Input.GetKey("9") && !yoyo)
@@ -2159,6 +2170,22 @@ namespace PlopMachine
             }
             yoyo = Input.GetKey("9");
 
+            if (Input.GetKey("8") && !yoyo2)
+            {
+                if (switchbetweentwoothernumbers)
+                {
+                    theothernumber = 11;
+                    switchbetweentwoothernumbers = false;
+                    Debug("Drums activated");
+                }
+                else
+                {
+                    theothernumber = 111222;
+                    switchbetweentwoothernumbers = true;
+                    Debug("Drums deactivated");
+                }
+            }
+            yoyo2 = Input.GetKey("8");
         }
 
         public static readonly SoundID Kick = new SoundID("Kick", register: true);
