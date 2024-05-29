@@ -1176,7 +1176,7 @@ namespace PlopMachine
             //static List<string> nameshaha = [];
             static int TensionStopwatch; //this will be reset on wipe, and be the strain until a modulation or strum  //tension is chordstopwatch essentially 
             //depending on how i wanna do the random, like if i wanna do it like cookie clicker
-            static int modulationortransposition; //0 will make it break like a modulation, 1 will like a transposition.  random
+            static bool ismodulation; //0 will make it break like a modulation, 1 will like a transposition.  random
             static bool hasbroken; //will be set to true when breaks. reset to false at wipe, and by undo
             static int differencebuffer;
             static bool hasswitchedscales;
@@ -1188,8 +1188,8 @@ namespace PlopMachine
             private static void Break(PlopMachine plopmachine)
             {
                 hasbroken = true;
-                modulationortransposition = UnityEngine.Random.Range(0, 2);
-                if (modulationortransposition == 0)
+                ismodulation = 0 == UnityEngine.Random.Range(0, 2);
+                if (ismodulation)
                 {//modulation
                     int keybefore = plopmachine.CurrentKey;
                     bool scalebefore = plopmachine.inmajorscale;
@@ -1234,7 +1234,7 @@ namespace PlopMachine
             }
             private static void UndoBreak(PlopMachine plopMachine)
             {
-                if (modulationortransposition == 0)
+                if (ismodulation)
                 {//modulation
                     plopMachine.PushKeyModulation(-differencebuffer);
                     if (hasswitchedscales)
@@ -1247,7 +1247,7 @@ namespace PlopMachine
                     for (int i = 0; i < LiaisonList.Count; i++)
                     {
                         Liaison liaison = LiaisonList[i];
-                        string unduednote = liaison.note.Substring(0, 3);
+                        string unduednote = liaison.note.Substring(0, 5);
                         LiaisonList[i] = new Liaison(unduednote, liaison.stopwatch, liaison.pattern, liaison.patternindex, liaison.period);
                     }
                 }
@@ -1272,6 +1272,7 @@ namespace PlopMachine
                     {
                         if (UnityEngine.Random.Range(0, 12) + (int)((1 - plopmachine.fichtean) * 4) <= 4)
                         {
+                            Debug("UNDID A BREAK BUT GOOD");
                             UndoBreak(plopmachine);
                         }
                         BreakUndoStopwatch = 0;
@@ -1476,7 +1477,17 @@ namespace PlopMachine
 
                 if (willadd) { LiaisonList.Add(helo); }
                 if (LiaisonList.Count < 3) { isindividualistic = true; }
-                else { isindividualistic = UnityEngine.Random.Range(0, 100) < 8+(int)(plopmachine.fichtean*16); }
+                else 
+                { 
+                    if (!isindividualistic)
+                    {
+                        isindividualistic = UnityEngine.Random.Range(0, 100) < 2+(int)(plopmachine.fichtean*6); 
+                    }
+                    else
+                    {
+                        isindividualistic = UnityEngine.Random.Range(0, 100) > 34+ (int)(plopmachine.fichtean * 26);
+                    }
+                }
                 if (!isindividualistic) { Analyze(plopmachine); }
                 //if (!isindividualistic) { Debug($"Added {mynote}, a {helo.note} with analysis"); } else { Debug($"Added {mynote}, a {helo.note} without analysis"); }
             }
@@ -2081,6 +2092,7 @@ namespace PlopMachine
             //Debug("Fichtean: " + fichtean + " Yeah");
             //Debug("Chordexhaustion: " + chordexhaustion + " Yeah");
             PlayEntry(mic);
+            ChitChat.PrintRace();
             //if (debugstopwatch < 300) Debug("It's just waiting");
             //Dust.Update(mic, this);
             //Debug("Amount of sounds currently in da works: " + mic.soundObjects.Count);
