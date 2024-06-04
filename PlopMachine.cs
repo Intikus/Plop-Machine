@@ -783,7 +783,7 @@ namespace PlopMachine
                     playingchord = false;
                     EntryRequest = true;
                 }
-                elseb
+                else
                 {
                     ChitChat.Update(mic, this);
                     chordexhaustion *= Mathf.Lerp(0.9975f, 0.9925f, fichtean);
