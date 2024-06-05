@@ -770,7 +770,6 @@ namespace PlopMachine
                     chordsequenceiteration = 0;
                 }
                 NoteMagazine.Fester(this);
-                ChitChat.RandomMode();
                 playingchord = true;
             }
             //Debug("Done with entrychord");
@@ -835,7 +834,6 @@ namespace PlopMachine
             }
 
         }
-
         struct Liaison
         {
             public Liaison(string note, int stopwatch, bool[] pattern, int patternindex, string period)
@@ -872,11 +870,22 @@ namespace PlopMachine
             static int arpstep = 0;
             static public bool arpgoingupwards = false;
             static int arptimer = 20;
+
+            static bool[] arppattern = [true, true, true, false];
+            //static bool[] arppattern = [true, true, true, true, true, false, true, false, false, true, true, false];
+            //static bool[] arppattern = [true, true, true, true, true, true, false, false, true, false, false];
+            static int arppatternindex = 0;
+
+            static public double arpcounterstopwatch;
+            static int arpcurrentfreq;
+            static public int arpbufferfreq;
+
             static List<int> randomsetsacrificeboard = new List<int>();
             static bool arpmiddlenoteistop;
             static int arpindexabovemidline;
             static int arpindexbelowmidline;
             //static List<string> nameshaha = [];
+            
             static int TensionStopwatch; //this will be reset on wipe, and be the strain until a modulation or strum  //tension is chordstopwatch essentially 
             //depending on how i wanna do the random, like if i wanna do it like cookie clicker
             static bool ismodulation; //0 will make it break like a modulation, 1 will like a transposition.  random
@@ -885,9 +894,6 @@ namespace PlopMachine
             static bool hasswitchedscales;
             static int BreakUndoStopwatch; //will start to be counted when tension has broken
             static float evolvestopwatch;
-            static public double arpcounterstopwatch;
-            static int arpcurrentfreq;
-            static public int arpbufferfreq;
             private static void Break(PlopMachine plopmachine)
             {
                 hasbroken = true;
@@ -1004,30 +1010,20 @@ namespace PlopMachine
                         if (arptimer <= 0)
                         {
                             if (LiaisonList.Count != 0) //bruh why should it ever be less than zero lmao (that's the joke here)
-                            {
-                                CollectiveArpStep(mic, plopmachine);
+                            { 
+                                if (arppattern[arppatternindex]) CollectiveArpStep(mic, plopmachine);
                                 plopmachine.mygreen += 0.3f;
                                 arpcounterstopwatch += plopmachine.fichtean * 12 + 4;
                                 //arpcurrentfreq = (int)(Mathf.PerlinNoise((float)arpcounterstopwatch / 1000f, (float)arpcounterstopwatch / 4000f) * 5);
 
-                                int waitnumber = 2;
-
-                                switch (arpbufferfreq)
-                                {            
-                                    case 0: waitnumber = 4; break;
-                                    case 1: waitnumber = 6; break;
-                                    case 2: waitnumber = 8; break;
-                                    case 3: waitnumber = 12; break;
-                                    case 4: waitnumber = 16; break;
-                                    case 5: waitnumber = 16; break;
-                                }
+                                int waitnumber = arpbufferfreq switch { 0 => 4, 1 => 6, 2 => 8, 3 => 12, 4 => 16, _ => 16, };
                                 arpcurrentfreq = (int)(Mathf.PerlinNoise((float)arpcounterstopwatch / 1000f, (float)arpcounterstopwatch / 4000f) * 5);
                                 if (arpbufferfreq != arpcurrentfreq && plopmachine.chordtimer < 96)
                                 {
                                     if (arpbufferfreq > arpcurrentfreq) 
                                     {
                                         waitnumber /= 2;
-                                        CollectiveArpStep(mic, plopmachine);
+                                        if (arppattern[arppatternindex]) CollectiveArpStep(mic, plopmachine);
                                     }
                                     else 
                                     { 
@@ -1038,11 +1034,6 @@ namespace PlopMachine
                                 //PLUSS ONE because its' fucking... because this one plays it at the exact same time??? And goes downward for some reason??? Oh wait it's because it starts HERE. At THIS MOMENT, if it was a wait, there would be 24 until the next.
                                 //Debug("OK SO THE NEXT ONE IS " + arptimer);
                                 arptimer = Wait.Until($"1/{waitnumber}", 1, plopmachine.debugstopwatch);
-
-                                //int randomint = UnityEngine.Random.Range(LiaisonList.Count, LiaisonList.Count + 11);       HALTERED AWAY FOR NOW
-                                //if (randomint >= 14) CollectiveArpStep(mic, plopmachine); //the sequel, the second note that plucks with the first, this shall only have a CHANCE when at many numbers
-                                //the drawback of this is that the two notes will Only be played simultaneously. if i want to make them lightly strummed, i would have to have the next one played at another thing...
-                                //I've come to the revelation that i don't need to make it return string and all that, i'm keeping it here for a bit just for safekeeping, anyways. i can make this activate another mechanism that does another collectivearpstep only 1-4 frames afterwards.
 
                                 if (UnityEngine.Random.Range(0, 150000) + TensionStopwatch*12 > 150000) //RTYU            this is strum activationcode  //temp, will share with other. I decide now that if it's strummed, it'll roll a chance to break, but reset the "stopwatch" both use, tension   
                                 {
@@ -1055,6 +1046,7 @@ namespace PlopMachine
                                     }
                                     TensionStopwatch = 0;
                                 }
+                                arppatternindex = arppatternindex + 1 < arppattern.Length ? arppatternindex + 1 : 0;
                             }
                         }
                         else
@@ -1135,7 +1127,7 @@ namespace PlopMachine
                         ind = int.Parse(hey[1].Substring(0, 1));
                     }
                     int transposition = plopmachine.IndexTOCKInt(ind);
-
+                        
                     int freqnumb = int.Parse(hey[0]) * 12 + transposition + extratranspose;
                     LiaisonsFreqNumbs.Add(freqnumb);
                     index++;
@@ -1158,21 +1150,45 @@ namespace PlopMachine
                     Debug(i + " " + LiaisonList[i].note);
                 }
             }
-            public static void CheckIfIndividualism(PlopMachine plopMachine)
+            public static void Instantiate(PlopMachine plopMachine)
             {
                 if (LiaisonList.Count < 3) { isindividualistic = true; Debug("SO its normally individual"); }
                 else
                 {
                     Debug("YO");
+                    /*
                     if (!isindividualistic)
                     {
                         //isindividualistic = UnityEngine.Random.Range(0, 100) < 2+(int)(plopmachine.fichtean*6); 
                         //i hate individualism now (for a moment)
                     } 
                     else { isindividualistic = UnityEngine.Random.Range(0, 100) > 34 + (int)(plopMachine.fichtean * 26); }
-
+                    */
+                    isindividualistic = false;
                 }
                 if (!isindividualistic) { Analyze(plopMachine); }
+
+                if (UnityEngine.Random.Range(0, 2) == 1) RandomMode();
+                arpingmode = Arpmode.upwards; //FOR TESTING, REMOVE AFTERWARDS
+                arppatternindex = 0;
+                
+                //
+                //
+                //A "Proper" Arpegiation is one where
+                //The divisions of wait % the length of arppattern = 0
+                //AND
+                //The amount of True's % the amounts of waits per bar = 0
+                //
+                //
+                //
+                //
+                //
+                //
+                //Maybe the arppatternindex shouldn't be reset to zero if the arpmode isn't changed.
+                //I.E. It's only when the arpmode changes that you reset arppatternindex.
+                //here it should generate arppattern
+                //what it base its generation upon is weird
+                // in the far future it should make the patterns for anarchy here
             }
             public static void Add(string note, PlopMachine plopmachine)
             {
@@ -1292,14 +1308,14 @@ namespace PlopMachine
                 BreakUndoStopwatch = 0;
                 randomsetsacrificeboard.Clear();
                 arpbufferfreq = (int)(Mathf.PerlinNoise((float)arpcounterstopwatch / 1000f, (float)arpcounterstopwatch / 4000f) * 5);
+                arpbufferfreq = 3; //TESTING 
                 if (!isindividualistic) { Analyze(plopmachine); }
             }
             public static void RandomMode()
             {
                 //switch statement that takes a number and changes
                 //arpingmode to be: "upwards" "downwards" "switchwards" "randomwards" "inwards" "outwards"
-                //int sowhichoneboss = UnityEngine.Random.Range(0, 6);
-                int sowhichoneboss = UnityEngine.Random.Range(4, 6);
+                int sowhichoneboss = UnityEngine.Random.Range(0, 6); //Holy fucking shit this has been only playing the last two for months.
                 arpingmode = (Arpmode)sowhichoneboss;
                 Debug("The arping mode has been chosen to be " + arpingmode);
                 arpmiddlenoteistop = UnityEngine.Random.Range(0, 2) == 1;
@@ -1323,7 +1339,7 @@ namespace PlopMachine
                 //if (returnnoteinstead) return LiaisonList[liaisonrace[arpstep]].note; 
                 //Debug("Playing a Plop from Chitchat.CollectiveArpStep, the " + arpstep);
                 plopmachine.Plop(LiaisonList[liaisonrace[arpstep]].note, mic); //so it plays the previous one
-                CheckThisLiaisonOutDude(liaisonrace[arpstep], plopmachine); //HALTERED, SEE IF WORKS LATER
+                CheckThisLiaisonOutDude(liaisonrace[arpstep], plopmachine);
 
                 switch (arpingmode)
                 {
@@ -1690,7 +1706,7 @@ namespace PlopMachine
                     ChitChat.Add(bullet, plopmachine);
                     //Debug($"Pushed a {bullet}Thing");
                 }
-                ChitChat.CheckIfIndividualism(plopmachine);
+                ChitChat.Instantiate(plopmachine);
                 InNoteList.Clear();
                 OutNoteList.Clear();
                 hasdecidedamount = false;
@@ -1746,7 +1762,6 @@ namespace PlopMachine
                 if (diditgetit) { return waitvalue - (atthistimeofday % waitvalue) - 1; }
                 else { return 24 - (atthistimeofday % 24) - 1; }
             }
-
             public static int Until(string waittype, int waits, int atthistimeofyear) //atthistimeofyear = debugstopwatch
             {
                 if (waits <= 0) waits = 1;
@@ -1787,7 +1802,7 @@ namespace PlopMachine
         //    }
         //}
         bool switchbetweentwonumbers;
-        bool switchbetweentwoothernumbers = false;
+        bool switchbetweentwoothernumbers = true;
         bool yoyo;
         bool yoyo2;
         bool yoyo3;
