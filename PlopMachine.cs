@@ -6,6 +6,9 @@ using System.Security;
 using UnityEngine;
 using System.IO;
 using System.Runtime.CompilerServices;
+using HarmonyLib;
+using System.Linq;
+using System.ComponentModel;
 
 [module: UnverifiableCode]
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -225,6 +228,7 @@ namespace PlopMachine
                 {
                     StartthefuckingWaitDict();
                     NoteMagazine.fuckinginitthatdictlineagebitch();
+                    ChitChat.InitializethisFUCKINGshit();
                     Debug("Checking files");
                     string[] mydirs = AssetManager.ListDirectory("soundeffects", false, true);
                     Debug("Printing all directories in soundeffects");
@@ -871,10 +875,83 @@ namespace PlopMachine
             static public bool arpgoingupwards = false;
             static int arptimer = 20;
 
-            static bool[] arppattern = [true, true, true, false];
-            //static bool[] arppattern = [true, true, true, true, true, false, true, false, false, true, true, false];
-            //static bool[] arppattern = [true, true, true, true, true, true, false, false, true, false, false];
-            static int arppatternindex = 0;
+            public enum Step
+            {
+                off, //doesn't play a sound or take a step
+                on, //plays a sound, then takes a step
+                muted, //doesn't play a sound, but takes a step
+                repeat, //plays a sound, but doesn't take a step
+                reverse, //plays a sound, then takes a step backwards
+                reversemuted, //doesn't play a sound, then takes a step backwards
+                twice // plays one at twice speed
+            }
+            static Step[] stepsequence = [Step.on, Step.on, Step.on, Step.reverse, Step.off];
+            static List<Step> steparrangment = new List<Step>();
+            static int stepsequenceindex = 0;
+            static List<Step[]> sequencepiecearrangement = new List<Step[]>(); //what will be array-ed 
+            static Step[] stepsequencebonuspiece = [];
+            static Step stepbuffer;
+            static int sequencepieceselectbuffer = 0;
+            static List<List<Step[]>> SequencePieceNotADict = new();
+            public static void InitializethisFUCKINGshit()
+            {
+                List<Step[]> piecesforsector = []; //god i'm sooooo looking forward to translate this to meadow.
+                //ok maybe i should reevaluate. It seems that reducing density to a binary is a shit move. Should maybe actually make *that* dimention a float. Ah well, more for later.
+                
+                //0 = Normals, Low density
+                piecesforsector.Add([Step.off, Step.off, Step.off, Step.on]);
+                piecesforsector.Add([Step.on, Step.off, Step.off, Step.on]);
+                piecesforsector.Add([Step.on, Step.on, Step.off, Step.off, Step.on]);
+                SequencePieceNotADict.Add(piecesforsector.ToList());
+                Debug("HIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII");
+                Debug(Newtonsoft.Json.JsonConvert.SerializeObject(piecesforsector));
+                piecesforsector.Clear();
+                Debug(Newtonsoft.Json.JsonConvert.SerializeObject(piecesforsector));
+
+                //1 = Special, Low Density
+                piecesforsector.Add([Step.off, Step.on, Step.off, Step.muted, Step.on]);
+                piecesforsector.Add([Step.reverse, Step.off, Step.reverse, Step.twice, Step.on, Step.off]);
+                piecesforsector.Add([Step.reversemuted, Step.reversemuted, Step.reverse]);
+                piecesforsector.Add([Step.on, Step.off, Step.off, Step.off, Step.off, Step.twice]);
+                SequencePieceNotADict.Add(piecesforsector.ToList());
+                piecesforsector.Clear();
+
+                //2 = Normals, High density
+                piecesforsector.Add([Step.on, Step.on]);
+                piecesforsector.Add([Step.on, Step.on, Step.on]);
+                piecesforsector.Add([Step.on, Step.on, Step.twice, Step.on, Step.off]);
+                piecesforsector.Add([Step.on, Step.on, Step.on, Step.on]);
+                piecesforsector.Add([Step.off, Step.on, Step.on, Step.reverse, Step.on, Step.muted, Step.on]);
+                piecesforsector.Add([Step.on, Step.on, Step.on, Step.off]);
+                piecesforsector.Add([Step.on, Step.on, Step.off, Step.on]);
+                piecesforsector.Add([Step.on, Step.on, Step.on, Step.muted, Step.on]);
+                SequencePieceNotADict.Add(piecesforsector.ToList());
+                piecesforsector.Clear();
+
+                //3 = Special, High density
+                piecesforsector.Add([Step.on, Step.repeat, Step.repeat, Step.on, Step.on, Step.reverse]);
+                piecesforsector.Add([Step.on, Step.reverse, Step.reverse, Step.reversemuted, Step.on, Step.twice, Step.on]);
+                piecesforsector.Add([Step.on, Step.repeat, Step.repeat, Step.twice, Step.on, Step.on, Step.reverse]);
+                piecesforsector.Add([Step.on, Step.on, Step.on, Step.repeat, Step.reverse]);
+                piecesforsector.Add([Step.on, Step.off, Step.twice, Step.twice, Step.on, Step.on]);
+                SequencePieceNotADict.Add(piecesforsector.ToList());
+                piecesforsector.Clear();
+                Debug(Newtonsoft.Json.JsonConvert.SerializeObject(SequencePieceNotADict));
+            }
+
+            //listen ok so the deciding of which digit will be outside of in there
+            //The Dictionary of ArrayDictionarys is keyed from top left to bottom left.
+            //0 = Normals, Low density
+            //1 = Special, Low Density
+            //2 = Normals, High density
+            //3 = Special, High density
+            //It'll in the future be a Dictionary or whatever if i truly wanna search that badly. 
+            //--!The Dictionary of StepArrays is just to have a key of lengths, that way we can search for one with a specific length later.
+
+            static int stepsequencelength;
+
+            //reminder: The current frequency of notes is controlled by a float totally independent from fichtean, arpcurrentfreq
+
 
             static public double arpcounterstopwatch;
             static int arpcurrentfreq;
@@ -1000,59 +1077,57 @@ namespace PlopMachine
                         Analyze(plopmachine);
                         upperswitch = false;
                     }
+                    
+                    if (isstrumming) { Strum(mic, plopmachine); }
+                    
+                    arpcounterstopwatch += 4;
 
-                    if (isstrumming)
+                    if (arptimer <= 0)
                     {
-                        Strum(mic, plopmachine);
+                        if (LiaisonList.Count != 0) //bruh why should it ever be less than zero lmao (that's the joke here)
+                        { 
+                            if (!isstrumming) CollectiveArpStep(mic, plopmachine);
+                            plopmachine.mygreen += 0.3f;
+                            //arpcurrentfreq = (int)(Mathf.PerlinNoise((float)arpcounterstopwatch / 1000f, (float)arpcounterstopwatch / 4000f) * 5);
+
+                            int waitnumber = arpbufferfreq switch { 0 => 4, 1 => 6, 2 => 8, 3 => 12, 4 => 16, _ => 16, };
+                            
+                            arpcurrentfreq = (int)(Mathf.PerlinNoise((float)arpcounterstopwatch / 1000f, (float)arpcounterstopwatch / 4000f) * 5);
+                            if (stepsequence[stepsequenceindex] == Step.twice) waitnumber *= 2;
+                            if (arpbufferfreq != arpcurrentfreq && plopmachine.chordtimer < 96)
+                            {
+                                if (arpbufferfreq > arpcurrentfreq) 
+                                {
+                                    waitnumber /= 2;
+                                    if (!isstrumming) CollectiveArpStep(mic, plopmachine);
+                                }
+                                else 
+                                { 
+                                    //if (plopmachine.chordtimer == 48-1) waitnumber /= 2; 
+                                    //so this shall be remade if (plopmachine.chordtimer < 48-1) waitnumber *= 2; //doesn't work artistically
+                                }
+                            }
+                            //PLUSS ONE because its' fucking... because this one plays it at the exact same time??? And goes downward for some reason??? Oh wait it's because it starts HERE. At THIS MOMENT, if it was a wait, there would be 24 until the next.
+                            //Debug("OK SO THE NEXT ONE IS " + arptimer);
+                            arptimer = Wait.Until($"1/{waitnumber}", 1, plopmachine.debugstopwatch);
+
+                            if (UnityEngine.Random.Range(0, 150000) + TensionStopwatch*12 > 150000 && !isstrumming) //RTYU            this is strum activationcode  //temp, will share with other. I decide now that if it's strummed, it'll roll a chance to break, but reset the "stopwatch" both use, tension   
+                            {
+                                isstrumming = true;
+                                strumphase = Strumphases.queued;
+                                strumqueuetimer = Wait.Untils("half", 1, 3, plopmachine.debugstopwatch);
+                                if (UnityEngine.Random.Range(0, 1001) < 69) //good, the break will happen before the strum.
+                                {
+                                    Break(plopmachine);
+                                }
+                                TensionStopwatch = 0;
+                            }
+                            SequenceCheck();
+                        }
                     }
                     else
                     {
-                        if (arptimer <= 0)
-                        {
-                            if (LiaisonList.Count != 0) //bruh why should it ever be less than zero lmao (that's the joke here)
-                            { 
-                                if (arppattern[arppatternindex]) CollectiveArpStep(mic, plopmachine);
-                                plopmachine.mygreen += 0.3f;
-                                arpcounterstopwatch += plopmachine.fichtean * 12 + 4;
-                                //arpcurrentfreq = (int)(Mathf.PerlinNoise((float)arpcounterstopwatch / 1000f, (float)arpcounterstopwatch / 4000f) * 5);
-
-                                int waitnumber = arpbufferfreq switch { 0 => 4, 1 => 6, 2 => 8, 3 => 12, 4 => 16, _ => 16, };
-                                arpcurrentfreq = (int)(Mathf.PerlinNoise((float)arpcounterstopwatch / 1000f, (float)arpcounterstopwatch / 4000f) * 5);
-                                if (arpbufferfreq != arpcurrentfreq && plopmachine.chordtimer < 96)
-                                {
-                                    if (arpbufferfreq > arpcurrentfreq) 
-                                    {
-                                        waitnumber /= 2;
-                                        if (arppattern[arppatternindex]) CollectiveArpStep(mic, plopmachine);
-                                    }
-                                    else 
-                                    { 
-                                        //if (plopmachine.chordtimer == 48-1) waitnumber /= 2; 
-                                        //so this shall be remade if (plopmachine.chordtimer < 48-1) waitnumber *= 2; //doesn't work artistically
-                                    }
-                                }
-                                //PLUSS ONE because its' fucking... because this one plays it at the exact same time??? And goes downward for some reason??? Oh wait it's because it starts HERE. At THIS MOMENT, if it was a wait, there would be 24 until the next.
-                                //Debug("OK SO THE NEXT ONE IS " + arptimer);
-                                arptimer = Wait.Until($"1/{waitnumber}", 1, plopmachine.debugstopwatch);
-
-                                if (UnityEngine.Random.Range(0, 150000) + TensionStopwatch*12 > 150000) //RTYU            this is strum activationcode  //temp, will share with other. I decide now that if it's strummed, it'll roll a chance to break, but reset the "stopwatch" both use, tension   
-                                {
-                                    isstrumming = true;
-                                    strumphase = Strumphases.queued;
-                                    strumqueuetimer = Wait.Untils("half", 1, 3, plopmachine.debugstopwatch);
-                                    if (UnityEngine.Random.Range(0, 1001) < 69) //good, the break will happen before the strum.
-                                    {
-                                        Break(plopmachine);
-                                    }
-                                    TensionStopwatch = 0;
-                                }
-                                arppatternindex = arppatternindex + 1 < arppattern.Length ? arppatternindex + 1 : 0;
-                            }
-                        }
-                        else
-                        {
-                            arptimer--;
-                        }
+                        arptimer--;
                     }
                 }
             }
@@ -1150,6 +1225,53 @@ namespace PlopMachine
                     Debug(i + " " + LiaisonList[i].note);
                 }
             }
+            public static void SequenceCheck()
+            {
+                //The name is a meme like the Rizz check thing whatever dude i'm burning out.
+                //So it's gonna need this to check when it's at the end to add the bonuses
+                //now         buffer
+                //normal      normal
+                //FUCKING     normal (Shouldn't progress here)
+                //FUCKING     FUCKING
+                //normal      FUCKING 
+                //Debug(stepbuffer + " " + stepsequence[stepsequenceindex] + "   And there's " + stepsequence[stepsequenceindex]);
+                if (stepsequence[stepsequenceindex] == Step.twice && stepbuffer != Step.twice)
+                {
+                    //Debug("Fuckoff");
+                }
+                else
+                {
+                    //Debug("Hiiiii " + stepsequenceindex + " " + stepsequence.Length);
+                    stepsequenceindex = stepsequenceindex + 1 < stepsequence.Length ? stepsequenceindex + 1 : 0;
+                }
+
+                stepbuffer = stepsequence[stepsequenceindex];
+
+                if (stepsequenceindex == 0)
+                {
+                    //do the things you do when you loop
+                    Debug("Has looped");
+                    Debug(Json.Serializer.Serialize(stepsequence));
+                    steparrangment.Clear();
+                    foreach (Step[] sequence in sequencepiecearrangement)
+                    {
+                        for (int j = 0; j < sequence.Length; j++)
+                        {
+                            steparrangment.Add(sequence[j]);
+                        }
+                    }
+                    int randoooooo = UnityEngine.Random.Range(0, 4);
+                    List<Step[]> ayeee = SequencePieceNotADict[randoooooo];
+                    stepsequencebonuspiece = ayeee[UnityEngine.Random.Range(0, ayeee.Count)];
+                    
+                    for (int j = 0; j < stepsequencebonuspiece.Length; j++)
+                    {
+                        steparrangment.Add(stepsequencebonuspiece[j]);
+                    }
+                    stepsequence = steparrangment.ToArray();
+                    Debug(Json.Serializer.Serialize(stepsequence));
+                }
+            }
             public static void Instantiate(PlopMachine plopMachine)
             {
                 if (LiaisonList.Count < 3) { isindividualistic = true; Debug("SO its normally individual"); }
@@ -1170,9 +1292,8 @@ namespace PlopMachine
 
                 if (UnityEngine.Random.Range(0, 2) == 1) RandomMode();
                 arpingmode = Arpmode.upwards; //FOR TESTING, REMOVE AFTERWARDS
-                arppatternindex = 0;
-                
-                //
+                Debug("So it got here");
+                /*
                 //
                 //A "Proper" Arpegiation is one where
                 //The divisions of wait % the length of arppattern = 0
@@ -1180,7 +1301,42 @@ namespace PlopMachine
                 //The amount of True's % the amounts of waits per bar = 0
                 //
                 //
-                //
+                */
+                stepsequenceindex = 0;
+                sequencepiecearrangement.Clear();
+                Debug("So it got here too");
+                for (int amountofpieces = UnityEngine.Random.Range(2, 5); amountofpieces > 0; amountofpieces--)
+                {
+                    Debug("Picked Piece: " + amountofpieces);
+                    int randooooo;
+                    do
+                    {
+                        randooooo = UnityEngine.Random.Range(0, 4);
+                    } while (randooooo == sequencepieceselectbuffer || UnityEngine.Random.Range(0, 2) == 1);
+                    Debug("Randomsequence thingy done, number " + randooooo);
+                    sequencepieceselectbuffer = randooooo;
+                    List<Step[]> ayeee = SequencePieceNotADict[randooooo];
+                    Debug("Json magic or smth ");
+                    Debug(Json.Serializer.Serialize(ayeee));
+                    Step[] ThePieceIWantBaby = ayeee[UnityEngine.Random.Range(0, ayeee.Count)];
+                    Debug("Should" +
+                        "ve" +
+                        "picked a piece yo");
+                    sequencepiecearrangement.Add(ThePieceIWantBaby);
+                }
+                //Step[][] wagawacka = sequencepiecearrangement.ToArray();
+                steparrangment.Clear();
+
+                foreach (Step[] sequence in sequencepiecearrangement)
+                {
+                    for (int j = 0; j < sequence.Length; j++)
+                    {
+                        Debug("adding a piece " + sequence[j]);
+                        steparrangment.Add(sequence[j]);
+                    }
+                }
+
+                stepsequence = steparrangment.ToArray();
                 //
                 //
                 //
@@ -1308,7 +1464,7 @@ namespace PlopMachine
                 BreakUndoStopwatch = 0;
                 randomsetsacrificeboard.Clear();
                 arpbufferfreq = (int)(Mathf.PerlinNoise((float)arpcounterstopwatch / 1000f, (float)arpcounterstopwatch / 4000f) * 5);
-                arpbufferfreq = 3; //TESTING 
+                arpbufferfreq = plopmachine.SPEEDNUMBERTHATISNTGONNASTAY; //TESTING 
                 if (!isindividualistic) { Analyze(plopmachine); }
             }
             public static void RandomMode()
@@ -1338,107 +1494,162 @@ namespace PlopMachine
                 //public static string CollectiveArpStep(VirtualMicrophone mic, PlopMachine plopmachine, bool returnnoteinstead = false)
                 //if (returnnoteinstead) return LiaisonList[liaisonrace[arpstep]].note; 
                 //Debug("Playing a Plop from Chitchat.CollectiveArpStep, the " + arpstep);
-                plopmachine.Plop(LiaisonList[liaisonrace[arpstep]].note, mic); //so it plays the previous one
-                CheckThisLiaisonOutDude(liaisonrace[arpstep], plopmachine);
-
-                switch (arpingmode)
+                bool willplop = false;
+                bool willstep = false;
+                bool reverse = false;
+                
+                switch (stepsequence[stepsequenceindex])
                 {
-                    case Arpmode.upwards:
-                        arpstep++;
-                        if (arpstep >= LiaisonList.Count) { arpstep = 0; }
+                    case Step.on:
+                        willplop = true;
+                        willstep = true;
+                        reverse = false;
                         break;
 
-                    case Arpmode.downwards:
-                        arpstep--;
-                        if (arpstep < 0) { arpstep = LiaisonList.Count - 1; }
+                    case Step.off:
+                        willplop = false;
+                        willstep = false;
+                        reverse = false;
                         break;
 
-                    case Arpmode.switchwards:
-                        if (arpgoingupwards)
-                        {
-                            arpstep++;
-                            if (arpstep >= LiaisonList.Count)
-                            { //will have already played the top one, so back down it go
-                                arpstep = LiaisonList.Count - 2;
-                                arpgoingupwards = false;
-                            }
-                        }
-                        else
-                        {
-                            arpstep--;
-                            if (arpstep < 0)
-                            {
-                                arpstep = 1;
-                                arpgoingupwards = true;
-                            }
-                        }
+                    case Step.muted:
+                        willplop = false;
+                        willstep = true;
+                        reverse = false;
                         break;
 
-                    case Arpmode.randomwards:
-                        if (randomsetsacrificeboard.Count == 0)
-                        {
-                            foreach (int i in liaisonrace)
-                            {
-                                randomsetsacrificeboard.Add(i);
-                            }
-                        }
-                        int thesacrifice = UnityEngine.Random.Range(0, randomsetsacrificeboard.Count);
-                        arpstep = liaisonrace[randomsetsacrificeboard[thesacrifice]];
-                        randomsetsacrificeboard.RemoveAt(thesacrifice);
+                    case Step.repeat:
+                        willplop = true;
+                        willstep = false;
+                        reverse = false;
                         break;
 
-                    case Arpmode.inwards:
-                        int lookoutfor;
-                        if (arpgoingupwards)
-                        {
-                            arpstep++;
-                            if (arpmiddlenoteistop) lookoutfor = arpindexabovemidline;
-                            else lookoutfor = arpindexbelowmidline;
-
-                            if (arpstep >= lookoutfor)
-                            {
-                                arpgoingupwards = false;
-                                arpstep = LiaisonList.Count - 1;
-                            }
-                        }
-                        else
-                        {
-                            arpstep--;
-                            if (arpmiddlenoteistop) lookoutfor = arpindexbelowmidline;
-                            else lookoutfor = arpindexabovemidline;
-                            if (arpstep <= lookoutfor)
-                            {
-                                arpgoingupwards = true;
-                                arpstep = 0;
-                            }
-                        }
+                    case Step.reverse:
+                        willplop = true;
+                        willstep = true;
+                        reverse = true;
                         break;
 
-                    case Arpmode.outwards:
-                        if (arpgoingupwards)
+                    case Step.reversemuted:
+                        willplop = false;
+                        willstep = true;
+                        reverse = true;
+                        break;
+                }
+
+                if (willplop)
+                {
+                    plopmachine.Plop(LiaisonList[liaisonrace[arpstep]].note, mic); //so it plays the previous one
+                    CheckThisLiaisonOutDude(liaisonrace[arpstep], plopmachine);
+                }
+                //steppatternindex = steppatternindex + 1 < steppattern.Length ? steppatternindex + 1 : 0;
+                
+                if (willstep)
+                { 
+                    int number = reverse ? LiaisonList.Count - 1 : 1;
+                    for (int jo = 0; jo < number; jo++)
+                    {
+                        switch (arpingmode)
                         {
-                            arpstep++;
-                            if (arpstep >= LiaisonList.Count)
-                            { //this fucks up and returns a negative value  if  liaisonlist.count = 1
-                                //float pseudoarpstep = LiaisonList.Count / 2;
-                                if (arpmiddlenoteistop)
-                                    arpstep = arpindexbelowmidline;//(int)Math.Floor(pseudoarpstep) - 1;
+                            case Arpmode.upwards:
+                                arpstep++;
+                                if (arpstep >= LiaisonList.Count) { arpstep = 0; }
+                                break;
+
+                            case Arpmode.downwards:
+                                arpstep--;
+                                if (arpstep < 0) { arpstep = LiaisonList.Count - 1; }
+                                break;
+
+                            case Arpmode.switchwards:
+                                if (arpgoingupwards)
+                                {
+                                    arpstep++;
+                                    if (arpstep >= LiaisonList.Count)
+                                    { //will have already played the top one, so back down it go
+                                        arpstep = LiaisonList.Count - 2;
+                                        arpgoingupwards = false;
+                                    }
+                                }
                                 else
-                                    arpstep = arpindexabovemidline;// (int)Math.Ceiling(pseudoarpstep) - 1;
-                                arpgoingupwards = false;
-                            }
-                        }
-                        else
-                        {
-                            arpstep--;
-                            if (arpstep < 0)
-                            {
-                                if (arpmiddlenoteistop) arpstep = arpindexabovemidline;
-                                else arpstep = arpindexbelowmidline;
-                                arpgoingupwards = true;
-                            }
-                        }
-                        break;
+                                {
+                                    arpstep--;
+                                    if (arpstep < 0)
+                                    {
+                                        arpstep = 1;
+                                        arpgoingupwards = true;
+                                    }
+                                }
+                                break;
+
+                            case Arpmode.randomwards:
+                                if (randomsetsacrificeboard.Count == 0)
+                                {
+                                    foreach (int i in liaisonrace)
+                                    {
+                                        randomsetsacrificeboard.Add(i);
+                                    }
+                                }
+                                int thesacrifice = UnityEngine.Random.Range(0, randomsetsacrificeboard.Count);
+                                arpstep = liaisonrace[randomsetsacrificeboard[thesacrifice]];
+                                randomsetsacrificeboard.RemoveAt(thesacrifice);
+                                break;
+
+                            case Arpmode.inwards:
+                                int lookoutfor;
+                                if (arpgoingupwards)
+                                {
+                                    arpstep++;
+                                    if (arpmiddlenoteistop) lookoutfor = arpindexabovemidline;
+                                    else lookoutfor = arpindexbelowmidline;
+
+                                    if (arpstep >= lookoutfor)
+                                    {
+                                        arpgoingupwards = false;
+                                        arpstep = LiaisonList.Count - 1;
+                                    }
+                                }
+                                else
+                                {
+                                    arpstep--;
+                                    if (arpmiddlenoteistop) lookoutfor = arpindexbelowmidline;
+                                    else lookoutfor = arpindexabovemidline;
+                                    if (arpstep <= lookoutfor)
+                                    {
+                                        arpgoingupwards = true;
+                                        arpstep = 0;
+                                    }
+                                }
+                                break;
+
+                            case Arpmode.outwards:
+                                if (arpgoingupwards)
+                                {
+                                    arpstep++;
+                                    if (arpstep >= LiaisonList.Count)
+                                    { //this fucks up and returns a negative value  if  liaisonlist.count = 1
+                                        //float pseudoarpstep = LiaisonList.Count / 2;
+                                        if (arpmiddlenoteistop)
+                                            arpstep = arpindexbelowmidline;//(int)Math.Floor(pseudoarpstep) - 1;
+                                        else
+                                            arpstep = arpindexabovemidline;// (int)Math.Ceiling(pseudoarpstep) - 1;
+                                        arpgoingupwards = false;
+                                    }
+                                }
+                                else
+                                {
+                                    arpstep--;
+                                    if (arpstep < 0)
+                                    {
+                                        if (arpmiddlenoteistop) arpstep = arpindexabovemidline;
+                                        else arpstep = arpindexbelowmidline;
+                                        arpgoingupwards = true;
+                                    }
+                                }
+                                break;
+                        }   
+                    }
+                    
                 }
             }
 
@@ -1752,7 +1963,7 @@ namespace PlopMachine
             WaitDict.Add("1/128T", 1);
             WaitDict.Add("1/96", 1);
 
-            WaitDict.Add("defult", 24); //this is definetly not how to go about it but whatevs henp can correct me later lol
+            WaitDict.Add("default", 24); //this is definetly not how to go about it but whatevs henp can correct me later lol
         }
         public class Wait
         {
@@ -1808,6 +2019,7 @@ namespace PlopMachine
         bool yoyo3;
         int theothernumber = 112222;
         static int SimulationNumber;
+        int SPEEDNUMBERTHATISNTGONNASTAY = 3;
         float thenumber = 0.05f;
         private void RainWorldGame_Update(On.RainWorldGame.orig_Update orig, RainWorldGame self)
         {
@@ -1901,7 +2113,8 @@ namespace PlopMachine
             //mycolor = new(myred, mygreen, myblue, 1f);
             if (Input.GetKey("6") && !yoyo3)
             {
-                SimulationNumber++;
+                SPEEDNUMBERTHATISNTGONNASTAY = SPEEDNUMBERTHATISNTGONNASTAY > 5 ? 0 : (SPEEDNUMBERTHATISNTGONNASTAY + 1);
+                Debug(SPEEDNUMBERTHATISNTGONNASTAY);
             }
             yoyo3 = Input.GetKey("6");
 
