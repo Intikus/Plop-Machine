@@ -826,7 +826,7 @@ namespace PlopMachine
                     if (virtualMicrophone.soundObjects.Count > 23) DestroyLastSound();
                     var thissound = new VirtualMicrophone.DisembodiedSound(virtualMicrophone, soundData, pan, vol, pitch, false, 0);
                     virtualMicrophone.soundObjects.Add(thissound);
-                    Thingy thingy = new Thingy(type, thissound, vol, false, 0);
+                    InfoThingy thingy = new InfoThingy(type, thissound, vol, false, 0);
                     AliveList.Add(thingy);
                 }
                 else
@@ -854,7 +854,7 @@ namespace PlopMachine
             Drum,
             Pad //Oooo this could happen :33
         }
-        struct Thingy(PlopType type, VirtualMicrophone.SoundObject soundObject, float initvolume, bool dying, float dyingpercent)
+        struct InfoThingy(PlopType type, VirtualMicrophone.SoundObject soundObject, float initvolume, bool dying, float dyingpercent)
         {
             public PlopType type = type;
             public VirtualMicrophone.SoundObject soundObject = soundObject;
@@ -862,18 +862,18 @@ namespace PlopMachine
             public bool dying = dying;
             public float dyingpercent = dyingpercent;
         }
-        List<Thingy> AliveList = new List<Thingy>();
+        List<InfoThingy> AliveList = new List<InfoThingy>();
         private void DestroyLastSound()
         {
             PlopType looksfor = PlopType.Short;
-            Thingy KillThisFucker;
+            InfoThingy KillThisFucker;
             //int KillThisFuckerRightHere;
             int RightHere = -1;
             //bool NotMyProblem = false;
             while (true)
             {
                 Debug("helo");
-                foreach (Thingy aliverrr in AliveList)
+                foreach (InfoThingy aliverrr in AliveList)
                 {
                     Debug("finding");
                     Debug(aliverrr.type);
@@ -914,7 +914,7 @@ namespace PlopMachine
             {
                 for (int i = 0; i < AliveList.Count; i++)
                 {
-                    Thingy thingy = AliveList[i];
+                    InfoThingy thingy = AliveList[i];
                     if (thingy.dying)
                     {
                         float hah = thingy.dyingpercent;
@@ -939,21 +939,33 @@ namespace PlopMachine
             //just straight up kill that guy immediatly
             Debug("Hi");
             orig(self);
-            if (AliveList.Count != 0)
-            {
-                Debug("so there is");
-                Thingy itisnowdeadcommathat = new();
-                foreach (Thingy aliveandhappything in AliveList)
-                {
-                    //Debug("Is this the one that you just removed? " + (self == aliveandhappything.soundObject));
-                    if (aliveandhappything.soundObject == self)
-                    {
-                        itisnowdeadcommathat = aliveandhappything;
-                    }
-                }//can be optimized to just ,, find the Thingy that has the SoundObject
-                AliveList.Remove(itisnowdeadcommathat);
-                isremovingone = false;
+            int indextodelete = -1;
+            for (int i = 0; i < AliveList.Count; i++)
+            { 
+                if (AliveList[i].soundObject == self) {indextodelete = i; break;}
             }
+            if (indextodelete == -1) { Debug("this normal sound"); }
+            else 
+            { 
+                Debug("this plop");  
+                AliveList.RemoveAt(indextodelete);
+            }
+            
+            //if (AliveList.Count != 0)
+            //{
+            //    Debug("so there is");
+            //    Thingy itisnowdeadcommathat = new();
+            //    foreach (Thingy aliveandhappything in AliveList)
+            //    {
+            //        //Debug("Is this the one that you just removed? " + (self == aliveandhappything.soundObject));
+            //        if (aliveandhappything.soundObject == self)
+            //        {
+            //            itisnowdeadcommathat = aliveandhappything;
+            //        }
+            //    }//can be optimized to just ,, find the Thingy that has the SoundObject
+            //    AliveList.Remove(itisnowdeadcommathat);
+            //    isremovingone = false;
+            //}
         }
         
         //we can safetly "sound.Destroy" sounds in a list (reference type), cuz it'll only *then* put them on slatedfordeletion, which'll sort out the indexs.
