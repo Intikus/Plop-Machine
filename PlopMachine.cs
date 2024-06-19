@@ -26,6 +26,7 @@ namespace PlopMachine
             //On.PlayerGraphics.DrawSprites += hehedrawsprites;
             On.RainWorldGame.ctor += RainWorldGame_ctor; //actually usefull 
             On.AmbientSoundPlayer.TryInitiation += AmbientSoundPlayer_TryInitiation;
+            On.VirtualMicrophone.SoundObject.Destroy += SoundObject_Destroy;
         }
 
         private void AmbientSoundPlayer_TryInitiation(On.AmbientSoundPlayer.orig_TryInitiation orig, AmbientSoundPlayer self)
@@ -319,7 +320,7 @@ namespace PlopMachine
             int integer = thescale[treatedkey, index - 1];
             return integer;
         }
-        private SoundID[] SampDict(string length)
+        private SoundID[] SampDict(PlopType length)
         {
             //Debug($"It's trying to get length {length}");
             SoundID[] library = new SoundID[7]; //to do:  make better
@@ -374,7 +375,7 @@ namespace PlopMachine
 
             switch (length)
             {
-                case "L":
+                case PlopType.Long:
                     switch (patch)
                     {
                         case "Trisaw":
@@ -430,7 +431,7 @@ namespace PlopMachine
                             break;
                     }
                     break;
-                case "M":
+                case PlopType.Medium:
                     switch (patch)
                     {
                         case "Trisaw":
@@ -485,7 +486,7 @@ namespace PlopMachine
 
                     }
                     break;
-                case "S":
+                case PlopType.Short:
                     switch (patch)
                     {
                         case "Trisaw":
@@ -549,7 +550,7 @@ namespace PlopMachine
             string[] parts = input.Split('-');
 
             //Dust.Add(input, this); haltered
-            string slib = parts[0]; //either L for Long, M for Medium, or S for Short
+            PlopType slib = parts[0] switch { "L" => PlopType.Long, "M" => PlopType.Medium, "S" => PlopType.Short}; //either L for Long, M for Medium, or S for Short
             int oct = int.Parse(parts[1]);
             int ind;
             bool intiseasy = int.TryParse(parts[2], out ind);
@@ -597,9 +598,10 @@ namespace PlopMachine
             // (which will also be reverb effect here then)
 
             float humanizingrandomnessinvelocitylol = UnityEngine.Random.Range(360, 1001) / 1000f;
-            PlayThing(sampleused, humanizingrandomnessinvelocitylol, speeed, mic);
+            PlayThing(sampleused, humanizingrandomnessinvelocitylol, speeed, mic, slib);
 
         }
+        /*
         private void Plip(string input, float velocity, VirtualMicrophone mic)
         {
             //hellllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllllll
@@ -643,6 +645,7 @@ namespace PlopMachine
             float speeed = 1 * Mathf.Pow(magicnumber, transposition);
             PlayThing(sampleused, velocity, speeed, mic);
         }
+        */
         private void PushKeyModulation(int diff)
         {
             CurrentKey += diff;
@@ -794,11 +797,13 @@ namespace PlopMachine
                 }
             }           
         }
-        private void PlayThing(SoundID Note, float velocity, float speed, VirtualMicrophone virtualMicrophone)
+        private void PlaySound(SoundID Sound, float velocity, float speed, VirtualMicrophone virtualMicrophone)
         {
 
+        }
+        private void PlayThing(SoundID Note, float velocity, float speed, VirtualMicrophone virtualMicrophone, PlopType type)
+        {
             //virtualMicrophone.PlaySound(Note, 0f, intensity*0.5f, speed);
-
             float pan = (float)(UnityEngine.Random.Range(-350, 351) / 1000f);
             float vol = velocity * 0.5f;
             float pitch = speed;
@@ -818,8 +823,11 @@ namespace PlopMachine
                 SoundLoader.SoundData soundData = virtualMicrophone.GetSoundData(Note, -1);
                 if (virtualMicrophone.SoundClipReady(soundData))
                 {
+                    if (virtualMicrophone.soundObjects.Count > 23) DestroyLastSound();
                     var thissound = new VirtualMicrophone.DisembodiedSound(virtualMicrophone, soundData, pan, vol, pitch, false, 0);
                     virtualMicrophone.soundObjects.Add(thissound);
+                    Thingy thingy = new Thingy(type, thissound, vol, false, 0);
+                    AliveList.Add(thingy);
                 }
                 else
                 {
@@ -837,6 +845,136 @@ namespace PlopMachine
                 Debug($"Log {e}");
             }
 
+        }
+        enum PlopType
+        {
+            Short,
+            Medium,
+            Long,
+            Drum,
+            Pad //Oooo this could happen :33
+        }
+        struct Thingy(PlopType type, VirtualMicrophone.SoundObject soundObject, float initvolume, bool dying, float dyingpercent)
+        {
+            public PlopType type = type;
+            public VirtualMicrophone.SoundObject soundObject = soundObject;
+            public float initvolume = initvolume;
+            public bool dying = dying;
+            public float dyingpercent = dyingpercent;
+        }
+        List<Thingy> AliveList = new List<Thingy>();
+        private void DestroyLastSound()
+        {
+            PlopType looksfor = PlopType.Short;
+            Thingy KillThisFucker;
+            //int KillThisFuckerRightHere;
+            int RightHere = -1;
+            //bool NotMyProblem = false;
+            while (true)
+            {
+                Debug("helo");
+                foreach (Thingy aliverrr in AliveList)
+                {
+                    Debug("finding");
+                    Debug(aliverrr.type);
+                    Debug(looksfor);
+                    Debug(aliverrr.type == looksfor);
+                    RightHere++;
+                    if (aliverrr.type == looksfor && aliverrr.dying != true)
+                    {
+                        Debug("Found something to kill");
+                        KillThisFucker = aliverrr;
+                        KillThisFucker.dying = true;
+                        AliveList[RightHere] = KillThisFucker;
+                        //KillThisFuckerRightHere = RightHere; //jic break doesn't work
+                        break;
+                    }
+                }
+                
+                if (looksfor == PlopType.Pad || AliveList[RightHere].dying)
+                {
+                    //NotMyProblem = true;
+                    break; //Not my problem
+                }
+                Debug("Looks for... something");
+                RightHere = -1;
+                looksfor++;
+            }
+            //if (!NotMyProblem)
+            //{
+            //    KillThisFucker.dying = true;
+            //    AliveList[RightHere] = KillThisFucker;
+            //}
+        }
+        static bool isremovingone;
+        private void ThanatosSlayGirl()
+        {
+            bool breakkill = AliveList.Count == 0; 
+            if (!breakkill)
+            {
+                for (int i = 0; i < AliveList.Count; i++)
+                {
+                    Thingy thingy = AliveList[i];
+                    if (thingy.dying)
+                    {
+                        float hah = thingy.dyingpercent;
+                        hah = (hah * 0.1f) + 0.02f + hah;
+                        
+                        if (hah >= 1f || true)
+                        {
+                            Debug("I removed one");
+                            thingy.soundObject.Destroy();
+                            isremovingone = true;
+                        }
+                        else
+                        {
+                            thingy.soundObject.SetVolume = thingy.initvolume * (1 - hah);
+                        }
+                    }
+                }
+            }
+        }
+        private void SoundObject_Destroy(On.VirtualMicrophone.SoundObject.orig_Destroy orig, VirtualMicrophone.SoundObject self)
+        {
+            //just straight up kill that guy immediatly
+            Debug("Hi");
+            orig(self);
+            if (AliveList.Count != 0)
+            {
+                Debug("so there is");
+                Thingy itisnowdeadcommathat = new();
+                foreach (Thingy aliveandhappything in AliveList)
+                {
+                    //Debug("Is this the one that you just removed? " + (self == aliveandhappything.soundObject));
+                    if (aliveandhappything.soundObject == self)
+                    {
+                        itisnowdeadcommathat = aliveandhappything;
+                    }
+                }//can be optimized to just ,, find the Thingy that has the SoundObject
+                AliveList.Remove(itisnowdeadcommathat);
+                isremovingone = false;
+            }
+        }
+        
+        //we can safetly "sound.Destroy" sounds in a list (reference type), cuz it'll only *then* put them on slatedfordeletion, which'll sort out the indexs.
+        //the destruction we make could also be the kill that fades, and then destroys a thing. ez
+        static void PrintCurrentSounds(VirtualMicrophone virtualMicrophone)
+        {
+            foreach(var sound in virtualMicrophone.soundObjects)
+            {
+                print(sound.gameObject.ToString()); //this one gives the name (finally lol)
+                //print(sound.soundData.soundName.ToString()); 
+                //print(sound.soundData.ToString());
+            }
+            foreach (var sound in virtualMicrophone.soundObjects)
+            {
+                //sound.Destroy();
+                Debug(sound.audioSource.volume);
+                //sound.SetVolume = 0.2f; //for a fadeout, i need to find (or create) a float that is the same as its initvolume
+                sound.Destroy();
+                //anyhoo's we now know that i *could* use a lastplayed priority thingy, OR look at the volumes of what's currently playing and remove the one that's the least loud.
+                //lets find out the index version, sounds easiest
+            }
         }
         struct Liaison
         {
@@ -1291,7 +1429,7 @@ namespace PlopMachine
                 if (!isindividualistic) { Analyze(plopMachine); }
 
                 if (UnityEngine.Random.Range(0, 2) == 1) RandomMode();
-                arpingmode = Arpmode.upwards; //FOR TESTING, REMOVE AFTERWARDS
+                //arpingmode = Arpmode.upwards; //FOR TESTING, REMOVE AFTERWARDS
                 Debug("So it got here");
                 /*
                 //
@@ -1317,7 +1455,7 @@ namespace PlopMachine
                     sequencepieceselectbuffer = randooooo;
                     List<Step[]> ayeee = SequencePieceNotADict[randooooo];
                     Debug("Json magic or smth ");
-                    Debug(Json.Serializer.Serialize(ayeee));
+                    //Debug(Json.Serializer.Serialize(ayeee));
                     Step[] ThePieceIWantBaby = ayeee[UnityEngine.Random.Range(0, ayeee.Count)];
                     Debug("Should" +
                         "ve" +
@@ -1331,7 +1469,7 @@ namespace PlopMachine
                 {
                     for (int j = 0; j < sequence.Length; j++)
                     {
-                        Debug("adding a piece " + sequence[j]);
+                        //Debug("adding a piece " + sequence[j]);
                         steparrangment.Add(sequence[j]);
                     }
                 }
@@ -1398,7 +1536,6 @@ namespace PlopMachine
                 Liaison liaison = LiaisonList[indexofwhereitathomie];
 
                 bool itwillevolve = UnityEngine.Random.Range(0, 800) + (int)evolvestopwatch > 1200; //RTYU
-                if (Input.GetKey("7")) { itwillevolve = true; }
                 //Debug("Hi it is using this thing " + itwillevolve + " " + evolvestopwatch);
                 if (itwillevolve)
                 {
@@ -1506,6 +1643,12 @@ namespace PlopMachine
                         reverse = false;
                         break;
 
+                    case Step.twice:
+                        willplop = true;
+                        willstep = true;
+                        reverse = false;
+                        break;
+
                     case Step.off:
                         willplop = false;
                         willstep = false;
@@ -1535,6 +1678,7 @@ namespace PlopMachine
                         willstep = true;
                         reverse = true;
                         break;
+
                 }
 
                 if (willplop)
@@ -1649,7 +1793,6 @@ namespace PlopMachine
                                 break;
                         }   
                     }
-                    
                 }
             }
 
@@ -2017,10 +2160,13 @@ namespace PlopMachine
         bool yoyo;
         bool yoyo2;
         bool yoyo3;
+        bool yoyo4;
+        int testcooldown;
         int theothernumber = 112222;
         static int SimulationNumber;
-        int SPEEDNUMBERTHATISNTGONNASTAY = 3;
+        int SPEEDNUMBERTHATISNTGONNASTAY = 0;
         float thenumber = 0.05f;
+        int trytry = 5;
         private void RainWorldGame_Update(On.RainWorldGame.orig_Update orig, RainWorldGame self)
         {
             orig(self);
@@ -2033,7 +2179,8 @@ namespace PlopMachine
             fichtean = thenumber;
             //Debug("Fichtean: " + fichtean + " Yeah");
             //Debug("Chordexhaustion: " + chordexhaustion + " Yeah");
-            PlayEntry(mic);
+            //PlayEntry(mic);
+            ThanatosSlayGirl();
             /*
             string hallo = "    ";
             hallo += chordtimer.ToString();
@@ -2054,51 +2201,47 @@ namespace PlopMachine
             Debug(ChitChat.arpbufferfreq + " " + (int)(Mathf.PerlinNoise((float)ChitChat.arpcounterstopwatch / 1000f, (float)ChitChat.arpcounterstopwatch / 4000f) * 5));
             */
             //if (debugstopwatch < 300) Debug("It's just waiting");
-            //Dust.Update(mic, this);
             //Debug("Amount of sounds currently in da works: " + mic.soundObjects.Count);
+            testcooldown--;
+            //Debug(testcooldown);
+            if (testcooldown <= -1)
+            {
+                trytry = trytry <= 0 ? 5 : (trytry - 1);
+                Plop(trytry switch { 0 => "L-3-5", 1 => "L-4-1", 2 => "L-4-5", 3 => "L-4-3", 4 => "L-5-7", _ => "L-4-7" }, mic);
+                testcooldown = Wait.Until(SPEEDNUMBERTHATISNTGONNASTAY switch { 0 => "1", 1 => "1/4", 2 => "1/8", 3 => "1/16", 4 => "1/24", _ => "1/32" }, 1, debugstopwatch);
+            }
 
-            //if (Wait.Until("bar", 1, debugstopwatch) == 1) { Plip("L-5-1", mic); }
-            //if (Wait.Until("quarter", 1, debugstopwatch) == 23) //it's not 1,  it wouldn't start at 0, 0 is set so that the very next one is the action, max-1 is the start
-            //{ 
-            //    if (Wait.Until("bar", 1, debugstopwatch) == 95)
-            //    
-            //                Plop("S-6-1", mic); 
-            //    else 
-            //                Plop("S-5-1", mic); 
-            //    
-            //    //Debug("Fourth"); 
-            //}
             if (Wait.Until("eight", 1, debugstopwatch) == theothernumber)
             {
                 if (Wait.Until("quarter", 1, debugstopwatch) == 23)
                 {
-                    PlayThing(HiHat, 0.5f / 2, 1, mic);
+                    PlayThing(HiHat, 0.5f / 2, 1, mic, PlopType.Drum);
                     if (Wait.Until("bar", 1, debugstopwatch) == 95)
                     {
-                        PlayThing(Kick, 0.7f / 2, 1, mic);
+                        PlayThing(Kick, 0.7f / 2, 1, mic, PlopType.Drum);
                     }
                     else
                     {
                         if (Wait.Until("half", 1, debugstopwatch) == 47)
                         {
-                            PlayThing(Snare, 0.7f / 2, 1, mic);
+                            PlayThing(Snare, 0.7f / 2, 1, mic, PlopType.Drum);
                         }
                     }
                     if (Wait.Until("half", 1, debugstopwatch) == 47)
                     {
-                        PlayThing(HiHat, 0.27f / 2, 1, mic);
+                        PlayThing(HiHat, 0.27f / 2, 1, mic, PlopType.Drum);
                     }
                     else
                     {
-                        PlayThing(HiHat, 0.5f / 2, 1, mic);
+                        PlayThing(HiHat, 0.5f / 2, 1, mic, PlopType.Drum);
                     }
                 }
                 else
                 {
-                    PlayThing(HiHat, 0.12f / 2, 1, mic);
+                    PlayThing(HiHat, 0.12f / 2, 1, mic, PlopType.Drum);
                 }
             }
-            
+
 
             //Debug(MeadowMusic.vibeIntensity ??= 231);
             //Debug(MeadowMusic.vibePan ??= 20);
@@ -2111,6 +2254,13 @@ namespace PlopMachine
             //    myred = 0.06f;
             //}
             //mycolor = new(myred, mygreen, myblue, 1f);
+            if (Input.GetKey("5") && !yoyo4)
+            {
+                PrintCurrentSounds(mic);
+            }
+            yoyo4 = Input.GetKey("5");
+
+
             if (Input.GetKey("6") && !yoyo3)
             {
                 SPEEDNUMBERTHATISNTGONNASTAY = SPEEDNUMBERTHATISNTGONNASTAY > 5 ? 0 : (SPEEDNUMBERTHATISNTGONNASTAY + 1);
@@ -2118,6 +2268,22 @@ namespace PlopMachine
             }
             yoyo3 = Input.GetKey("6");
 
+            if (Input.GetKey("8") && !yoyo2)
+            {
+                if (switchbetweentwoothernumbers)
+                {
+                    theothernumber = 11;
+                    switchbetweentwoothernumbers = false;
+                    Debug("Drums activated");
+                }
+                else
+                {
+                    theothernumber = 111222;
+                    switchbetweentwoothernumbers = true;
+                    Debug("Drums deactivated");
+                }
+            }
+            yoyo2 = Input.GetKey("8");
 
             if (Input.GetKey("9") && !yoyo)
             {
@@ -2143,22 +2309,6 @@ namespace PlopMachine
             }
             yoyo = Input.GetKey("9");
 
-            if (Input.GetKey("8") && !yoyo2)
-            {
-                if (switchbetweentwoothernumbers)
-                {
-                    theothernumber = 11;
-                    switchbetweentwoothernumbers = false;
-                    Debug("Drums activated");
-                }
-                else
-                {
-                    theothernumber = 111222;
-                    switchbetweentwoothernumbers = true;
-                    Debug("Drums deactivated");
-                }
-            }
-            yoyo2 = Input.GetKey("8");
         }
 
         public static readonly SoundID Kick = new SoundID("Kick", register: true);
