@@ -163,7 +163,6 @@ namespace PlopMachine
 
         string UpcomingEntry = "Balaboo";         //important to set a first one
 
-        //bool weplipping = true;
         //stopwatches go upwards
         //timers go downwards
 
@@ -323,64 +322,20 @@ namespace PlopMachine
         private SoundID[] SampDict(PlopType length)
         {
             //Debug($"It's trying to get length {length}");
-            SoundID[] library = new SoundID[7]; //to do:  make better
+            //SoundID[] library = new SoundID[7]; //to do:  make better
             string acronym = CurrentRegion.ToUpper();
-            VibeZone[] newthings;
-            bool diditwork = vibeZonesDict.TryGetValue(acronym, out newthings);
+            bool diditwork = vibeZonesDict.TryGetValue(acronym, out VibeZone[] newthings);
             //we retrieve a newthings array (one of many vibezones)
-            //Debug("C" + diditwork);
             if (!diditwork) { Debug("itdidn'twork"); return null; }
-            VibeZone newthing = newthings[0]; //TEMP DUMMY FOR UNTIL HELLOTHERE'S REQUIUM
-            //and pick the one that is closer
-            //Debug("d");
+            VibeZone newthing = newthings[0]; //mmm yes //and pick the one that is closer
             string patch = newthing.songName;
-            //Debug(patch);
-            //switch (acronym)
-            //{
-            //    case "su" or "hi":
-            //        patch = "Trisaw";
-            //        break;
-            //
-            //    case "gw" or "sh":
-            //        patch = "Bell";
-            //        break;
-            //
-            //    case "ss" or "sb" or "sl":
-            //        patch = "Litri";
-            //        break;
-            //
-            //    case "cc" or "si":
-            //        patch = "Sine";
-            //        break;
-            //
-            //    case "ds" or "lf" or "uw":
-            //        patch = "Clar";
-            //        break;
-            //    default:
-            //        patch = "Trisaw";
-            //        break;
-            //}
-            //cc(chimney cannopy)
-            //ds(drainage system)
-            //gw(garbage wastes)
-            //hi(industrial complex)
-            //lf(farm array)
-            //sb("sb subterranian")
-            //sh(shadow)
-            //si(sky place)
-            //sl(shoreline)
-            //ss(fivebepples)
-            //su(outskirts)
-            //uw(underhang and wall)
-
+            SoundID[] library = new SoundID[7];
             switch (length)
             {
                 case PlopType.Long:
                     switch (patch)
                     {
                         case "Trisaw":
-                            //here's how henp did it string[] keycodeNames = { "1", "2", "3", "4", "5", "6", "7", "8", "9", "0", "-", "=" };
-                            //SoundID[] library2 = { C1LongTrisaw, C2LongTrisaw, C3LongTrisaw, C4LongTrisaw, C5LongTrisaw, C6LongTrisaw, C7LongTrisaw };
                             library[0] = C1LongTrisaw;
                             library[1] = C2LongTrisaw;
                             library[2] = C3LongTrisaw;
@@ -548,38 +503,21 @@ namespace PlopMachine
         {
             Debug("It plays the plop " + input);
             string[] parts = input.Split('-');
-
             //Dust.Add(input, this); haltered
-            PlopType slib = parts[0] switch { "L" => PlopType.Long, "M" => PlopType.Medium, "S" => PlopType.Short}; //either L for Long, M for Medium, or S for Short
+            PlopType slib = parts[0] switch { "L" => PlopType.Long, "M" => PlopType.Medium, "S" => PlopType.Short, _ => PlopType.Short }; //either L for Long, M for Medium, or S for Short
             int oct = int.Parse(parts[1]);
-            int ind;
-            bool intiseasy = int.TryParse(parts[2], out ind);
+            bool intiseasy = int.TryParse(parts[2], out int ind);
             //Debug($"So the string is {s}, which counts as {parts.Length} amounts of parts. {slib}, {oct}, {ind}");
-
             SoundID[] slopb = SampDict(slib);
             SoundID sampleused = slopb[oct - 1];
             //Debug("Octave integer " + oct + ". sampleused: " + sampleused);
-            //Debug($"It uses the sample {sampleused}");
             int extratranspose = 0;
             if (!intiseasy)
             {
                 string appends = parts[2].Substring(1);
-                foreach (char letter in appends)
-                {
-                    switch (letter)
-                    {
-                        case 'b':
-                            extratranspose--;
-                            break;
-                        case '#':
-                            extratranspose++;
-                            break;
-                    }
-                }
-
+                foreach (char letter in appends) { extratranspose = letter switch { 'b' => extratranspose--, '#' => extratranspose, _ => extratranspose }; }
                 ind = int.Parse(parts[2].Substring(0, 1));
             }
-
             int transposition = IndexTOCKInt(ind);
             //if (!intiseasy)
             //{
@@ -589,10 +527,7 @@ namespace PlopMachine
             //}
 
             transposition += extratranspose; //If to the power is smart(can take negative numbers), this can work
-
-            float speeed = 1;
-
-            speeed *= Mathf.Pow(magicnumber, transposition);
+            float speeed = Mathf.Pow(magicnumber, transposition);
 
             // get intensity and turn that into too 
             // (which will also be reverb effect here then)
@@ -609,8 +544,7 @@ namespace PlopMachine
             string s = input.ToString();
 
             string[] parts = s.Split('-');
-
-            string slib = parts[0]; //either L for Long, M for Medium, or S for Short
+            PlopType slib = parts[0] switch { "L" => PlopType.Long, "M" => PlopType.Medium, "S" => PlopType.Short, _ => PlopType.Short }; //either L for Long, M for Medium, or S for Short
             int oct = int.Parse(parts[1]);
             int ind;
             bool intiseasy = int.TryParse(parts[2], out ind);
@@ -618,18 +552,7 @@ namespace PlopMachine
             if (!intiseasy)
             {
                 string appends = parts[2].Substring(1);
-                foreach (char letter in appends)
-                {
-                    switch (letter)
-                    {
-                        case 'b':
-                            extratranspose--;
-                            break;
-                        case '#':
-                            extratranspose++;
-                            break;
-                    }
-                }
+                foreach (char letter in appends) { extratranspose = letter switch { 'b' => extratranspose--, '#' => extratranspose, _ => extratranspose }; }
                 ind = int.Parse(parts[2].Substring(0, 1));
             }
             SoundID[] slopb = SampDict(slib);
@@ -643,7 +566,7 @@ namespace PlopMachine
             //}
             transposition += extratranspose;
             float speeed = 1 * Mathf.Pow(magicnumber, transposition);
-            PlayThing(sampleused, velocity, speeed, mic);
+            PlayThing(sampleused, velocity, speeed, mic, slib);
         }
         */
         private void PushKeyModulation(int diff)
@@ -669,50 +592,17 @@ namespace PlopMachine
             if (dicedint <= 44 && dicedint > 7) CurrentKey += 2 * dicedsign;
             if (dicedint <= 7) CurrentKey += 3 * dicedsign;
 
-            if (UnityEngine.Random.Range(0, 101) < 4)
-            {
-                if (inmajorscale)
-                {
-                    inmajorscale = false;
-                    Debug("Minor scale now");
-                    //weplipping = false;
-                }
-                else
-                {
-                    inmajorscale = true;
-                    Debug("Major scale now");
-                    //weplipping = true;
-                }
-            }
-
+            if (UnityEngine.Random.Range(0, 101) < 4) inmajorscale = !inmajorscale;
 
             Debug($"The chance rolled {dicedint}, modified by {QueuedModulation}, it goes to {dicedsign}. So it was {deadint} and now is {CurrentKey}");
             QueuedModulation = 0;
 
             //CurrentKey += QueuedModulation;
 
-            switch (CurrentKey)
+            while (CurrentKey < -6 || CurrentKey > 6)
             {
-                case -7:
-                    CurrentKey = 5;
-                    break;
-                case -8:
-                    CurrentKey = 4;
-                    break;
-                case -9:
-                    CurrentKey = 3;
-                    break;
-                case 7:
-                    CurrentKey = -5;
-                    break;
-                case 8:
-                    CurrentKey = -4;
-                    break;
-                case 9:
-                    CurrentKey = -3;
-                    break;
-                default:
-                    break;
+                if (CurrentKey < 1) CurrentKey += 12;
+                else CurrentKey -= 12;
             }
             ChitChat.Analyze(this); //if made into a 12 tone temprement, maybe analyze will  be readjusted to remove duplicates, or muting the duplicates, or other stuff with them
         }
@@ -823,7 +713,8 @@ namespace PlopMachine
                 SoundLoader.SoundData soundData = virtualMicrophone.GetSoundData(Note, -1);
                 if (virtualMicrophone.SoundClipReady(soundData))
                 {
-                    if (virtualMicrophone.soundObjects.Count > 23) DestroyLastSound();
+                    if (virtualMicrophone.soundObjects.Count*2-AliveList.Count > 22) DestroyLastSound();
+                    if (virtualMicrophone.soundObjects.Count*2-AliveList.Count > 24) DestroyLastSound();
                     var thissound = new VirtualMicrophone.DisembodiedSound(virtualMicrophone, soundData, pan, vol, pitch, false, 0);
                     virtualMicrophone.soundObjects.Add(thissound);
                     InfoThingy thingy = new InfoThingy(type, thissound, vol, false, 0);
@@ -867,44 +758,28 @@ namespace PlopMachine
         {
             PlopType looksfor = PlopType.Short;
             InfoThingy KillThisFucker;
-            //int KillThisFuckerRightHere;
             int RightHere = -1;
-            //bool NotMyProblem = false;
             while (true)
             {
-                Debug("helo");
                 foreach (InfoThingy aliverrr in AliveList)
                 {
-                    Debug("finding");
-                    Debug(aliverrr.type);
-                    Debug(looksfor);
-                    Debug(aliverrr.type == looksfor);
                     RightHere++;
                     if (aliverrr.type == looksfor && aliverrr.dying != true)
                     {
-                        Debug("Found something to kill");
                         KillThisFucker = aliverrr;
                         KillThisFucker.dying = true;
                         AliveList[RightHere] = KillThisFucker;
-                        //KillThisFuckerRightHere = RightHere; //jic break doesn't work
                         break;
                     }
                 }
-                
                 if (looksfor == PlopType.Pad || AliveList[RightHere].dying)
                 {
                     //NotMyProblem = true;
                     break; //Not my problem
                 }
-                Debug("Looks for... something");
                 RightHere = -1;
                 looksfor++;
             }
-            //if (!NotMyProblem)
-            //{
-            //    KillThisFucker.dying = true;
-            //    AliveList[RightHere] = KillThisFucker;
-            //}
         }
         static bool isremovingone;
         private void ThanatosSlayGirl()
@@ -918,7 +793,7 @@ namespace PlopMachine
                     if (thingy.dying)
                     {
                         float hah = thingy.dyingpercent;
-                        hah = (hah * 0.1f) + 0.02f + hah;
+                        hah = (hah * 0.1f) + 0.175f + hah;
                         
                         if (hah >= 1f || true)
                         {
@@ -936,43 +811,27 @@ namespace PlopMachine
         }
         private void SoundObject_Destroy(On.VirtualMicrophone.SoundObject.orig_Destroy orig, VirtualMicrophone.SoundObject self)
         {
-            //just straight up kill that guy immediatly
-            Debug("Hi");
+            //just straight up kill that guy immediatly     //Debug("Hi");
             orig(self);
             int indextodelete = -1;
             for (int i = 0; i < AliveList.Count; i++)
             { 
                 if (AliveList[i].soundObject == self) {indextodelete = i; break;}
             }
-            if (indextodelete == -1) { Debug("this normal sound"); }
-            else 
+            if (indextodelete == -1) 
             { 
-                Debug("this plop");  
+                //Debug("this normal sound"); 
+            }
+            else
+            { //Debug("this plop");  
                 AliveList.RemoveAt(indextodelete);
             }
-            
-            //if (AliveList.Count != 0)
-            //{
-            //    Debug("so there is");
-            //    Thingy itisnowdeadcommathat = new();
-            //    foreach (Thingy aliveandhappything in AliveList)
-            //    {
-            //        //Debug("Is this the one that you just removed? " + (self == aliveandhappything.soundObject));
-            //        if (aliveandhappything.soundObject == self)
-            //        {
-            //            itisnowdeadcommathat = aliveandhappything;
-            //        }
-            //    }//can be optimized to just ,, find the Thingy that has the SoundObject
-            //    AliveList.Remove(itisnowdeadcommathat);
-            //    isremovingone = false;
-            //}
         }
-        
-        //we can safetly "sound.Destroy" sounds in a list (reference type), cuz it'll only *then* put them on slatedfordeletion, which'll sort out the indexs.
-        //the destruction we make could also be the kill that fades, and then destroys a thing. ez
         static void PrintCurrentSounds(VirtualMicrophone virtualMicrophone)
         {
-            foreach(var sound in virtualMicrophone.soundObjects)
+            //we can safetly "sound.Destroy" sounds in a list (reference type), cuz it'll only *then* put them on slatedfordeletion, which'll sort out the indexs.
+            //the destruction we make could also be the kill that fades, and then destroys a thing. ez
+            foreach (var sound in virtualMicrophone.soundObjects)
             {
                 print(sound.gameObject.ToString()); //this one gives the name (finally lol)
                 //print(sound.soundData.soundName.ToString()); 
@@ -1501,24 +1360,13 @@ namespace PlopMachine
                 //Debug($"SOthestart of Chitchat.add, when i'm trying to input a {note}");
                 string[] anotherhighernotesparts = note.Split('-');
                 //Debug(anotherhighernotesparts[0] + " " + anotherhighernotesparts[1]);
-                int octave = int.Parse(anotherhighernotesparts[0]);
-
+                //int octave = int.Parse(anotherhighernotesparts[0]);
                 bool willadd = true;
                 string mynote = "M-" + note;
                 //int thing = (int)(plopmachine.fichtean * 5); //was 16 - 4 here
                 int thing = arpbufferfreq; //is 4 - 16 here
-                string period;
-                switch (thing)
-                {
-                    case 0: period = "1/8"; break;
-                    case 1: period = "1/12"; break;
-                    case 2: period = "1/16"; break;
-                    case 3: period = "1/24";break;
-                    case 4: period = "1/32";break;
-                    default:period = "1/32";break;
-                }
+                string period = thing switch { 0 => "1/8", 1 => "1/12", 2 => "1/16", 3 => "1/24", 4 => "1/32", _ => "1/32", };
                 int liaisonwait = Wait.Until(period, 1, plopmachine.debugstopwatch);
-                //int amountoftimes = UnityEngine.Random.Range(8 - (int)(plopmachine.fichtean * 3), 29 - (int)(plopmachine.fichtean * 15));
                 int amountoftimes = UnityEngine.Random.Range(8 - (arpbufferfreq/5 * 3), 23 - ((int)(arpbufferfreq/2)* 3));
                 bool[] mama = new bool[amountoftimes];
                 for (int i = 0; i < amountoftimes; i++)
@@ -1708,13 +1556,11 @@ namespace PlopMachine
                         switch (arpingmode)
                         {
                             case Arpmode.upwards:
-                                arpstep++;
-                                if (arpstep >= LiaisonList.Count) { arpstep = 0; }
+                                arpstep = arpstep >= LiaisonList.Count ? 0 : arpstep + 1;
                                 break;
 
                             case Arpmode.downwards:
-                                arpstep--;
-                                if (arpstep < 0) { arpstep = LiaisonList.Count - 1; }
+                                arpstep = arpstep < 0 ? LiaisonList.Count - 1 : arpstep - 1;
                                 break;
 
                             case Arpmode.switchwards:
@@ -1982,7 +1828,6 @@ namespace PlopMachine
                 triedamounts = 0;
                 Push(plopmachine);
             }
-            //----------------------------------------------------------------------------------------------------
             private static void Grows(PlopMachine plopmachine)
             {
                 string Note1 = InNoteList[UnityEngine.Random.Range(0, InNoteList.Count)];
@@ -2268,7 +2113,8 @@ namespace PlopMachine
             //mycolor = new(myred, mygreen, myblue, 1f);
             if (Input.GetKey("5") && !yoyo4)
             {
-                PrintCurrentSounds(mic);
+                //PrintCurrentSounds(mic);
+                PushKeyModulation(-1);
             }
             yoyo4 = Input.GetKey("5");
 
