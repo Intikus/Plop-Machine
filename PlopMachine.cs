@@ -913,7 +913,6 @@ namespace PlopMachine
                 piecesforsector.Add([Step.on, Step.on, Step.off, Step.off, Step.on]);
                 SequencePieceNotADict.Add(piecesforsector.ToList());
                 Debug("HIIIIIIIIIIIIIIIIIIIIIIIIIIIIIII");
-                Debug(Newtonsoft.Json.JsonConvert.SerializeObject(piecesforsector));
                 piecesforsector.Clear();
                 Debug(Newtonsoft.Json.JsonConvert.SerializeObject(piecesforsector));
 
@@ -1234,6 +1233,12 @@ namespace PlopMachine
                     Debug(i + " " + LiaisonList[i].note);
                 }
             }
+            public static void PrintSequence()
+            {
+                Debug("Sequence: " + Json.Serializer.Serialize(stepsequence));
+                Debug("Arpmode: " + arpingmode);
+                Debug("Amount of notes played: " + LiaisonList.Count);
+            }
             public static void SequenceCheck()
             {
                 //The name is a meme like the Rizz check thing whatever dude i'm burning out.
@@ -1328,9 +1333,7 @@ namespace PlopMachine
                     Debug("Json magic or smth ");
                     //Debug(Json.Serializer.Serialize(ayeee));
                     Step[] ThePieceIWantBaby = ayeee[UnityEngine.Random.Range(0, ayeee.Count)];
-                    Debug("Should" +
-                        "ve" +
-                        "picked a piece yo");
+                    Debug("Should" + "ve" + "picked a piece yo");
                     sequencepiecearrangement.Add(ThePieceIWantBaby);
                 }
                 //Step[][] wagawacka = sequencepiecearrangement.ToArray();
@@ -1494,7 +1497,7 @@ namespace PlopMachine
                 bool willplop = false;
                 bool willstep = false;
                 bool reverse = false;
-                
+
                 switch (stepsequence[stepsequenceindex])
                 {
                     case Step.on:
@@ -1540,6 +1543,7 @@ namespace PlopMachine
                         break;
 
                 }
+                //Debug($"{ willplop} + { willstep } + { reverse}, and it's currently at {arpstep}, {arpingmode}");
 
                 if (willplop)
                 {
@@ -1556,11 +1560,11 @@ namespace PlopMachine
                         switch (arpingmode)
                         {
                             case Arpmode.upwards:
-                                arpstep = arpstep >= LiaisonList.Count ? 0 : arpstep + 1;
+                                arpstep = arpstep + 1 >= LiaisonList.Count ? 0 : arpstep + 1;
                                 break;
 
                             case Arpmode.downwards:
-                                arpstep = arpstep < 0 ? LiaisonList.Count - 1 : arpstep - 1;
+                                arpstep = arpstep - 1 < 0 ? LiaisonList.Count - 1 : arpstep - 1;
                                 break;
 
                             case Arpmode.switchwards:
@@ -2036,7 +2040,7 @@ namespace PlopMachine
             fichtean = thenumber;
             //Debug("Fichtean: " + fichtean + " Yeah");
             //Debug("Chordexhaustion: " + chordexhaustion + " Yeah");
-            //PlayEntry(mic);
+            PlayEntry(mic);
             ThanatosSlayGirl();
             /*
             string hallo = "    ";
@@ -2059,14 +2063,13 @@ namespace PlopMachine
             */
             //if (debugstopwatch < 300) Debug("It's just waiting");
             //Debug("Amount of sounds currently in da works: " + mic.soundObjects.Count);
-            testcooldown--;
-            //Debug(testcooldown);
-            if (testcooldown <= -1)
-            {
-                trytry = trytry <= 0 ? 5 : (trytry - 1);
-                Plop(trytry switch { 0 => "L-3-5", 1 => "L-4-1", 2 => "L-4-5", 3 => "L-4-3", 4 => "L-5-7", _ => "L-4-7" }, mic);
-                testcooldown = Wait.Until(SPEEDNUMBERTHATISNTGONNASTAY switch { 0 => "1", 1 => "1/4", 2 => "1/8", 3 => "1/16", 4 => "1/24", _ => "1/32" }, 1, debugstopwatch);
-            }
+            //testcooldown--;
+            //if (testcooldown <= -1)
+            //{
+            //    trytry = trytry <= 0 ? 5 : (trytry - 1);
+            //    Plop(trytry switch { 0 => "L-3-5", 1 => "L-4-1", 2 => "L-4-5", 3 => "L-4-3", 4 => "L-5-7", _ => "L-4-7" }, mic);
+            //    testcooldown = Wait.Until(SPEEDNUMBERTHATISNTGONNASTAY switch { 0 => "1", 1 => "1/4", 2 => "1/8", 3 => "1/16", 4 => "1/24", _ => "1/32" }, 1, debugstopwatch);
+            //}
 
             if (Wait.Until("eight", 1, debugstopwatch) == theothernumber)
             {
@@ -2114,7 +2117,8 @@ namespace PlopMachine
             if (Input.GetKey("5") && !yoyo4)
             {
                 //PrintCurrentSounds(mic);
-                PushKeyModulation(-1);
+                //PushKeyModulation(-1);
+                ChitChat.PrintSequence();
             }
             yoyo4 = Input.GetKey("5");
 
