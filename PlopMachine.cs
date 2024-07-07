@@ -956,7 +956,12 @@ namespace PlopMachine
             //It'll in the future be a Dictionary or whatever if i truly wanna search that badly. 
             //--!The Dictionary of StepArrays is just to have a key of lengths, that way we can search for one with a specific length later.
 
-            static int stepsequencelength;
+            static Dictionary<Vector2, Step[]> FullSequences = new Dictionary<Vector2, Step[]>();
+
+            public static void InitializethisFuckingFullShit()
+            {
+                FullSequences.Add(new Vector2(0.3f, 0.4f), [Step.on, Step.on, Step.on, Step.on, Step.off, Step.twice]);
+            }
 
             //reminder: The current frequency of notes is controlled by a float totally independent from fichtean, arpcurrentfreq
 
@@ -1101,7 +1106,7 @@ namespace PlopMachine
                             int waitnumber = arpbufferfreq switch { 0 => 4, 1 => 6, 2 => 8, 3 => 12, 4 => 16, _ => 16, };
                             
                             arpcurrentfreq = (int)(Mathf.PerlinNoise((float)arpcounterstopwatch / 1000f, (float)arpcounterstopwatch / 4000f) * 5);
-                            if (stepsequence[stepsequenceindex] == Step.twice) waitnumber *= 2;
+                            if (mycoolthing == Step.twice) waitnumber *= 2;
                             if (arpbufferfreq != arpcurrentfreq && plopmachine.chordtimer < 96)
                             {
                                 if (arpbufferfreq > arpcurrentfreq) 
@@ -1249,7 +1254,7 @@ namespace PlopMachine
                 //FUCKING     FUCKING
                 //normal      FUCKING 
                 //Debug(stepbuffer + " " + stepsequence[stepsequenceindex] + "   And there's " + stepsequence[stepsequenceindex]);
-                if (stepsequence[stepsequenceindex] == Step.twice && stepbuffer != Step.twice)
+                if (mycoolthing == Step.twice && stepbuffer != Step.twice)
                 {
                     //Debug("Fuckoff");
                 }
@@ -1259,7 +1264,7 @@ namespace PlopMachine
                     stepsequenceindex = stepsequenceindex + 1 < stepsequence.Length ? stepsequenceindex + 1 : 0;
                 }
 
-                stepbuffer = stepsequence[stepsequenceindex];
+                stepbuffer = mycoolthing;
 
                 if (stepsequenceindex == 0)
                 {
@@ -1286,6 +1291,63 @@ namespace PlopMachine
                     Debug(Json.Serializer.Serialize(stepsequence));
                 }
             }
+            public static void InstantiateFull(PlopMachine plopMachine)
+            {
+                if (LiaisonList.Count < 3) { isindividualistic = true; Debug("SO its normally individual"); }
+                else
+                {
+                    Debug("YO");
+                    /*
+                    if (!isindividualistic)
+                    {
+                        //isindividualistic = UnityEngine.Random.Range(0, 100) < 2+(int)(plopmachine.fichtean*6); 
+                        //i hate individualism now (for a moment)
+                    } 
+                    else { isindividualistic = UnityEngine.Random.Range(0, 100) > 34 + (int)(plopMachine.fichtean * 26); }
+                    */
+                    isindividualistic = false;
+                }
+                if (!isindividualistic) { Analyze(plopMachine); }
+                if (UnityEngine.Random.Range(0, 2) == 1) RandomMode();
+
+                Vector2 RandomCoordinate = new Vector2(Mathf.PerlinNoise(plopMachine.debugstopwatch / 200f + -300f, plopMachine.debugstopwatch / 200f),
+                                                       Mathf.PerlinNoise(plopMachine.debugstopwatch / 200f + 1500f, plopMachine.debugstopwatch / 200f + 900));
+               
+                Dictionary<Vector2, Step[]> AcceptedPlaces = new();
+
+                foreach (KeyValuePair<Vector2, Step[]> entry in FullSequences)
+                {
+                    if (entry.Key.x > RandomCoordinate.x - 0.2f && entry.Key.x < RandomCoordinate.x + 0.2f &&
+                        entry.Key.y > RandomCoordinate.y - 0.2f && entry.Key.y < RandomCoordinate.y + 0.2f)
+                    {
+                        AcceptedPlaces.Add(entry.Key, entry.Value);
+                    }
+                }
+                if (AcceptedPlaces.Count == 0)
+                {
+                    foreach (KeyValuePair<Vector2, Step[]> entry in FullSequences)
+                    {
+                        if (entry.Key.x > RandomCoordinate.x - 0.4f && entry.Key.x < RandomCoordinate.x + 0.4f &&
+                            entry.Key.y > RandomCoordinate.y - 0.4f && entry.Key.y < RandomCoordinate.y + 0.4f)
+                        {
+                            AcceptedPlaces.Add(entry.Key, entry.Value);
+                        }
+                    }
+                }
+
+                Step[] hah = [];
+                float smallestmagnitude = 20000f;
+                foreach (KeyValuePair<Vector2, Step[]> entry in AcceptedPlaces)
+                {
+                    if ((entry.Key - RandomCoordinate).magnitude < smallestmagnitude)
+                    {
+                        smallestmagnitude = (entry.Key - RandomCoordinate).magnitude;
+                        hah = entry.Value;
+                    }
+                }
+                //I think i might just need to improv some more personally to learn what to do to make it more nice, more elegant.
+                //we can use hah to be the array now
+            }
             public static void Instantiate(PlopMachine plopMachine)
             {
                 if (LiaisonList.Count < 3) { isindividualistic = true; Debug("SO its normally individual"); }
@@ -1307,15 +1369,6 @@ namespace PlopMachine
                 if (UnityEngine.Random.Range(0, 2) == 1) RandomMode();
                 //arpingmode = Arpmode.upwards; //FOR TESTING, REMOVE AFTERWARDS
                 Debug("So it got here");
-                /*
-                //
-                //A "Proper" Arpegiation is one where
-                //The divisions of wait % the length of arppattern = 0
-                //AND
-                //The amount of True's % the amounts of waits per bar = 0
-                //
-                //
-                */
                 stepsequenceindex = 0;
                 sequencepiecearrangement.Clear();
                 Debug("So it got here too");
@@ -1481,6 +1534,7 @@ namespace PlopMachine
                 arpindexbelowmidline = (int)Math.Floor(pseudoarpstep) - 1;
                 //OKAY SO SIDE NOTE TO MYSELF, always call randommode AFTER you've found out how many things there are in here
             }
+            static Step mycoolthing;
             public static void CollectiveArpStep(VirtualMicrophone mic, PlopMachine plopmachine)
             {
                 //uses the logic of the mode selected by the string of arpingmode to *arp* between the notes,
@@ -1498,7 +1552,14 @@ namespace PlopMachine
                 bool willstep = false;
                 bool reverse = false;
 
-                switch (stepsequence[stepsequenceindex])
+                mycoolthing = Step.on;
+                if (Input.GetKey("1")) mycoolthing = Step.off;
+                if (Input.GetKey("2")) mycoolthing = Step.muted;
+                if (Input.GetKey("3")) mycoolthing = Step.twice;
+                if (Input.GetKey("4")) mycoolthing = Step.repeat;
+                if (Input.GetKey("5")) mycoolthing = Step.reverse;
+                //switch (stepsequence[stepsequenceindex])
+                switch (mycoolthing)
                 {
                     case Step.on:
                         willplop = true;
@@ -2118,7 +2179,7 @@ namespace PlopMachine
             {
                 //PrintCurrentSounds(mic);
                 //PushKeyModulation(-1);
-                ChitChat.PrintSequence();
+                //ChitChat.PrintSequence();
             }
             yoyo4 = Input.GetKey("5");
 
