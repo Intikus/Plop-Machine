@@ -9,6 +9,7 @@ using System.Runtime.CompilerServices;
 using HarmonyLib;
 using System.Linq;
 using System.ComponentModel;
+using static PlopMachine.PlopMachine.ChitChat;
 
 [module: UnverifiableCode]
 #pragma warning disable CS0618 // Type or member is obsolete
@@ -228,7 +229,7 @@ namespace PlopMachine
                 {
                     StartthefuckingWaitDict();
                     NoteMagazine.fuckinginitthatdictlineagebitch();
-                    ChitChat.InitializethisFUCKINGshit();
+                    ChitChat.InitializethisFuckingFullShit();
                     Debug("Checking files");
                     string[] mydirs = AssetManager.ListDirectory("soundeffects", false, true);
                     Debug("Printing all directories in soundeffects");
@@ -894,11 +895,11 @@ namespace PlopMachine
                 reversemuted, //doesn't play a sound, then takes a step backwards
                 twice // plays one at twice speed
             }
-            static Step[] stepsequence = [Step.on, Step.on, Step.on, Step.reverse, Step.off];
-            static List<Step> steparrangment = new List<Step>();
-            static int stepsequenceindex = 0;
+            public static Step[] stepsequence = [Step.on, Step.on, Step.on, Step.reverse, Step.off];
+            public static Step[] MainSequence = [Step.on, Step.on, Step.on, Step.reverse, Step.off];
+            public static List<Step> steparrangment = new List<Step>();
+            public static int stepsequenceindex = 0;
             static List<Step[]> sequencepiecearrangement = new List<Step[]>(); //what will be array-ed 
-            static Step[] stepsequencebonuspiece = [];
             static Step stepbuffer;
             static int sequencepieceselectbuffer = 0;
             static List<List<Step[]>> SequencePieceNotADict = new();
@@ -906,7 +907,7 @@ namespace PlopMachine
             {
                 List<Step[]> piecesforsector = []; //god i'm sooooo looking forward to translate this to meadow.
                 //ok maybe i should reevaluate. It seems that reducing density to a binary is a shit move. Should maybe actually make *that* dimention a float. Ah well, more for later.
-                
+
                 //0 = Normals, Low density
                 piecesforsector.Add([Step.off, Step.off, Step.off, Step.on]);
                 piecesforsector.Add([Step.on, Step.off, Step.off, Step.on]);
@@ -960,7 +961,18 @@ namespace PlopMachine
 
             public static void InitializethisFuckingFullShit()
             {
-                FullSequences.Add(new Vector2(0.3f, 0.4f), [Step.on, Step.on, Step.on, Step.on, Step.off, Step.twice]);
+                //x0-1 = empty-full, y0-1 = normal-weird
+                //FullSequences.Add(new Vector2(0.3f, 0.4f), [Step.on, Step.on, Step.on, Step.on, Step.off, Step.twice]);
+                //FullSequences.Add(new Vector2(0.2f, 0.5f), [Step.reverse, Step.on, Step.on, Step.muted]);
+                FullSequences.Add(new Vector2(0.5f, 0.5f), [Step.on, Step.on]);
+                //FullSequences.Add(new Vector2(0.2f, 0.2f), [Step.on, Step.on]);
+                //FullSequences.Add(new Vector2(0.2f, 0.8f), [Step.on, Step.on]);
+                //FullSequences.Add(new Vector2(0.8f, 0.2f), [Step.on, Step.on]);
+                //FullSequences.Add(new Vector2(0.8f, 0.8f), [Step.on, Step.on]);
+                //FullSequences.Add(new Vector2(0.4f, 0.4f), [Step.on, Step.on]);
+                //FullSequences.Add(new Vector2(0.4f, 0.6f), [Step.on, Step.on]);
+                //FullSequences.Add(new Vector2(0.6f, 0.4f), [Step.on, Step.on]);
+                //FullSequences.Add(new Vector2(0.6f, 0.6f), [Step.on, Step.on]);
             }
 
             //reminder: The current frequency of notes is controlled by a float totally independent from fichtean, arpcurrentfreq
@@ -1106,10 +1118,11 @@ namespace PlopMachine
                             int waitnumber = arpbufferfreq switch { 0 => 4, 1 => 6, 2 => 8, 3 => 12, 4 => 16, _ => 16, };
                             
                             arpcurrentfreq = (int)(Mathf.PerlinNoise((float)arpcounterstopwatch / 1000f, (float)arpcounterstopwatch / 4000f) * 5);
-                            if (mycoolthing == Step.twice) waitnumber *= 2;
+                            //if (mycoolthing == Step.twice) waitnumber *= 2;
+                            if (stepsequence[stepsequenceindex] == Step.twice) waitnumber *= 2;
                             if (arpbufferfreq != arpcurrentfreq && plopmachine.chordtimer < 96)
                             {
-                                if (arpbufferfreq > arpcurrentfreq) 
+                                if (arpbufferfreq > arpcurrentfreq && false) //TESTING 
                                 {
                                     waitnumber /= 2;
                                     if (!isstrumming) CollectiveArpStep(mic, plopmachine);
@@ -1253,18 +1266,23 @@ namespace PlopMachine
                 //FUCKING     normal (Shouldn't progress here)
                 //FUCKING     FUCKING
                 //normal      FUCKING 
-                //Debug(stepbuffer + " " + stepsequence[stepsequenceindex] + "   And there's " + stepsequence[stepsequenceindex]);
-                if (mycoolthing == Step.twice && stepbuffer != Step.twice)
+                Debug(stepsequenceindex + " is the current name");
+                Debug(stepbuffer + " " + stepsequence[stepsequenceindex] + " are the Steps Evaluated");
+                /*
+                if (stepsequence[stepsequenceindex] == Step.twice && stepbuffer != Step.twice)
                 {
                     //Debug("Fuckoff");
+                    stepbuffer = stepsequence[stepsequenceindex];
                 }
                 else
                 {
                     //Debug("Hiiiii " + stepsequenceindex + " " + stepsequence.Length);
+                    stepbuffer = stepsequence[stepsequenceindex];
                     stepsequenceindex = stepsequenceindex + 1 < stepsequence.Length ? stepsequenceindex + 1 : 0;
-                }
+                }   
+                */
+                stepbuffer = stepsequence[stepsequenceindex];
 
-                stepbuffer = mycoolthing;
 
                 if (stepsequenceindex == 0)
                 {
@@ -1272,21 +1290,32 @@ namespace PlopMachine
                     Debug("Has looped");
                     Debug(Json.Serializer.Serialize(stepsequence));
                     steparrangment.Clear();
-                    foreach (Step[] sequence in sequencepiecearrangement)
+
+                    //foreach (Step[] sequence in sequencepiecearrangement)
+                    //{
+                    //    for (int j = 0; j < sequence.Length; j++)
+                    //    {
+                    //        steparrangment.Add(sequence[j]);
+                    //    }
+                    //}
+
+                    for (int i = 0; i < MainSequence.Length; i++)
                     {
-                        for (int j = 0; j < sequence.Length; j++)
+                        steparrangment.Add(MainSequence[i]);
+                    }
+
+                    if (UnityEngine.Random.Range(0, 3) == 0)
+                    {
+                        int randoooooo = UnityEngine.Random.Range(0, 4);
+                        List<Step[]> ayeee = SequencePieceNotADict[randoooooo];
+                        Step[] stepsequencebonuspiece = ayeee[UnityEngine.Random.Range(0, ayeee.Count)];
+                        
+                        for (int j = 0; j < stepsequencebonuspiece.Length; j++)
                         {
-                            steparrangment.Add(sequence[j]);
+                            steparrangment.Add(stepsequencebonuspiece[j]);
                         }
                     }
-                    int randoooooo = UnityEngine.Random.Range(0, 4);
-                    List<Step[]> ayeee = SequencePieceNotADict[randoooooo];
-                    stepsequencebonuspiece = ayeee[UnityEngine.Random.Range(0, ayeee.Count)];
-                    
-                    for (int j = 0; j < stepsequencebonuspiece.Length; j++)
-                    {
-                        steparrangment.Add(stepsequencebonuspiece[j]);
-                    }
+
                     stepsequence = steparrangment.ToArray();
                     Debug(Json.Serializer.Serialize(stepsequence));
                 }
@@ -1315,26 +1344,19 @@ namespace PlopMachine
                
                 Dictionary<Vector2, Step[]> AcceptedPlaces = new();
 
-                foreach (KeyValuePair<Vector2, Step[]> entry in FullSequences)
-                {
-                    if (entry.Key.x > RandomCoordinate.x - 0.2f && entry.Key.x < RandomCoordinate.x + 0.2f &&
-                        entry.Key.y > RandomCoordinate.y - 0.2f && entry.Key.y < RandomCoordinate.y + 0.2f)
-                    {
-                        AcceptedPlaces.Add(entry.Key, entry.Value);
-                    }
-                }
-                if (AcceptedPlaces.Count == 0)
+                float dazone = 0.2f;
+                do
                 {
                     foreach (KeyValuePair<Vector2, Step[]> entry in FullSequences)
                     {
-                        if (entry.Key.x > RandomCoordinate.x - 0.4f && entry.Key.x < RandomCoordinate.x + 0.4f &&
-                            entry.Key.y > RandomCoordinate.y - 0.4f && entry.Key.y < RandomCoordinate.y + 0.4f)
+                        if (entry.Key.x > RandomCoordinate.x - dazone && entry.Key.x < RandomCoordinate.x + dazone &&
+                            entry.Key.y > RandomCoordinate.y - dazone && entry.Key.y < RandomCoordinate.y + dazone)
                         {
                             AcceptedPlaces.Add(entry.Key, entry.Value);
                         }
                     }
-                }
-
+                    dazone += 0.2f;
+                } while (AcceptedPlaces.Count == 0);
                 Step[] hah = [];
                 float smallestmagnitude = 20000f;
                 foreach (KeyValuePair<Vector2, Step[]> entry in AcceptedPlaces)
@@ -1345,23 +1367,28 @@ namespace PlopMachine
                         hah = entry.Value;
                     }
                 }
+                MainSequence = hah;
+                stepsequence = hah;
+                if (stepsequence.Length <= stepsequenceindex) stepsequenceindex = 0;
+                Debug("It finishes this");
                 //I think i might just need to improv some more personally to learn what to do to make it more nice, more elegant.
                 //we can use hah to be the array now
             }
+            /*
             public static void Instantiate(PlopMachine plopMachine)
             {
                 if (LiaisonList.Count < 3) { isindividualistic = true; Debug("SO its normally individual"); }
                 else
                 {
                     Debug("YO");
-                    /*
+                    
                     if (!isindividualistic)
                     {
                         //isindividualistic = UnityEngine.Random.Range(0, 100) < 2+(int)(plopmachine.fichtean*6); 
                         //i hate individualism now (for a moment)
                     } 
                     else { isindividualistic = UnityEngine.Random.Range(0, 100) > 34 + (int)(plopMachine.fichtean * 26); }
-                    */
+                    
                     isindividualistic = false;
                 }
                 if (!isindividualistic) { Analyze(plopMachine); }
@@ -1411,6 +1438,7 @@ namespace PlopMachine
                 //what it base its generation upon is weird
                 // in the far future it should make the patterns for anarchy here
             }
+            */
             public static void Add(string note, PlopMachine plopmachine)
             {
                 //Debug($"SOthestart of Chitchat.add, when i'm trying to input a {note}");
@@ -1517,7 +1545,7 @@ namespace PlopMachine
                 BreakUndoStopwatch = 0;
                 randomsetsacrificeboard.Clear();
                 arpbufferfreq = (int)(Mathf.PerlinNoise((float)arpcounterstopwatch / 1000f, (float)arpcounterstopwatch / 4000f) * 5);
-                arpbufferfreq = plopmachine.SPEEDNUMBERTHATISNTGONNASTAY; //TESTING 
+                //arpbufferfreq = plopmachine.SPEEDNUMBERTHATISNTGONNASTAY; //TESTING 
                 if (!isindividualistic) { Analyze(plopmachine); }
             }
             public static void RandomMode()
@@ -1534,7 +1562,6 @@ namespace PlopMachine
                 arpindexbelowmidline = (int)Math.Floor(pseudoarpstep) - 1;
                 //OKAY SO SIDE NOTE TO MYSELF, always call randommode AFTER you've found out how many things there are in here
             }
-            static Step mycoolthing;
             public static void CollectiveArpStep(VirtualMicrophone mic, PlopMachine plopmachine)
             {
                 //uses the logic of the mode selected by the string of arpingmode to *arp* between the notes,
@@ -1552,14 +1579,8 @@ namespace PlopMachine
                 bool willstep = false;
                 bool reverse = false;
 
-                mycoolthing = Step.on;
-                if (Input.GetKey("1")) mycoolthing = Step.off;
-                if (Input.GetKey("2")) mycoolthing = Step.muted;
-                if (Input.GetKey("3")) mycoolthing = Step.twice;
-                if (Input.GetKey("4")) mycoolthing = Step.repeat;
-                if (Input.GetKey("5")) mycoolthing = Step.reverse;
-                //switch (stepsequence[stepsequenceindex])
-                switch (mycoolthing)
+                switch (stepsequence[stepsequenceindex])
+                //switch (mycoolthing)
                 {
                     case Step.on:
                         willplop = true;
@@ -1982,7 +2003,7 @@ namespace PlopMachine
                     ChitChat.Add(bullet, plopmachine);
                     //Debug($"Pushed a {bullet}Thing");
                 }
-                ChitChat.Instantiate(plopmachine);
+                ChitChat.InstantiateFull(plopmachine);
                 InNoteList.Clear();
                 OutNoteList.Clear();
                 hasdecidedamount = false;
@@ -2089,6 +2110,14 @@ namespace PlopMachine
         int SPEEDNUMBERTHATISNTGONNASTAY = 0;
         float thenumber = 0.05f;
         int trytry = 5;
+
+        bool ol1;
+        bool ol2;
+        bool ol3;
+        bool ol4;
+        bool ol5;
+        bool ol6;
+        bool ol7;
         private void RainWorldGame_Update(On.RainWorldGame.orig_Update orig, RainWorldGame self)
         {
             orig(self);
@@ -2175,21 +2204,89 @@ namespace PlopMachine
             //    myred = 0.06f;
             //}
             //mycolor = new(myred, mygreen, myblue, 1f);
-            if (Input.GetKey("5") && !yoyo4)
+
+            if (Input.GetKey("1") && !ol1)
+            {
+                if (steparrangment[0] == Step.off) steparrangment.RemoveAt(0);
+                steparrangment.Add(Step.on);
+                stepsequence = [.. steparrangment];
+            }
+            ol1 = Input.GetKey("1");
+
+            if (Input.GetKey("2") && !ol2)
+            {
+                if (steparrangment[0] == Step.off) steparrangment.RemoveAt(0);
+                steparrangment.Add(Step.off);
+                stepsequence = [.. steparrangment];
+            }
+            ol2 = Input.GetKey("2");
+
+            if (Input.GetKey("3") && !ol3)
+            {
+                if (steparrangment[0] == Step.off) steparrangment.RemoveAt(0);
+                steparrangment.Add(Step.muted);
+                stepsequence = [.. steparrangment];
+            }
+            ol3 = Input.GetKey("3");
+
+            if (Input.GetKey("4") && !ol4)
+            {
+                if (steparrangment[0] == Step.off) steparrangment.RemoveAt(0);
+                steparrangment.Add(Step.twice);
+                stepsequence = [.. steparrangment];
+            }
+            ol4 = Input.GetKey("4");
+
+            if (Input.GetKey("5") && !ol5)
+            {
+                if (steparrangment[0] == Step.off) steparrangment.RemoveAt(0);
+                steparrangment.Add(Step.repeat);
+                stepsequence = [.. steparrangment];
+            }
+            ol5 = Input.GetKey("5");
+
+            if (Input.GetKey("6") && !ol6)
+            {
+                if (steparrangment[0] == Step.off) steparrangment.RemoveAt(0);
+                steparrangment.Add(Step.reverse);
+                stepsequence = [.. steparrangment];
+            }
+            ol6 = Input.GetKey("6");
+
+
+            if (Input.GetKey("7") && !ol7)
+            {
+                if (steparrangment.Count > 1)
+                {
+                    steparrangment.RemoveAt(steparrangment.Count-1);
+                    stepsequence = [.. steparrangment];
+                    if ( stepsequenceindex < steparrangment.Count - 1)
+                    {
+                        stepsequenceindex--;
+                    }
+                }
+                else { Debug("what the fuck are you doing dumbass"); }
+            }
+            ol7 = Input.GetKey("7");
+
+            if (Input.GetKey("q") && !yoyo4)
             {
                 //PrintCurrentSounds(mic);
                 //PushKeyModulation(-1);
                 //ChitChat.PrintSequence();
+                stepsequence = [Step.off];
+                steparrangment.Clear();
+                steparrangment.Add(Step.off);
+                ChitChat.stepsequenceindex = 0;
             }
-            yoyo4 = Input.GetKey("5");
+            yoyo4 = Input.GetKey("q");
 
-
-            if (Input.GetKey("6") && !yoyo3)
+            if (Input.GetKey("p") && !yoyo3)
             {
                 SPEEDNUMBERTHATISNTGONNASTAY = SPEEDNUMBERTHATISNTGONNASTAY > 5 ? 0 : (SPEEDNUMBERTHATISNTGONNASTAY + 1);
                 Debug(SPEEDNUMBERTHATISNTGONNASTAY);
             }
-            yoyo3 = Input.GetKey("6");
+            yoyo3 = Input.GetKey("p");
 
             if (Input.GetKey("8") && !yoyo2)
             {

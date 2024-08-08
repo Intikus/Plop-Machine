@@ -17,7 +17,7 @@
       "VerticalTabListWidth": 256,
       "DocumentGroups": [
         {
-          "DockedWidth": 383,
+          "DockedWidth": 465,
           "SelectedChildIndex": 10,
           "Children": [
             {
@@ -54,11 +54,11 @@
             },
             {
               "$type": "Bookmark",
-              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
+              "Name": "ST:129:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
             },
             {
               "$type": "Bookmark",
-              "Name": "ST:129:0:{116d2292-e37d-41cd-a077-ebacac4c8cc4}"
+              "Name": "ST:0:0:{1c4feeaa-4718-4aa9-859d-94ce25d182ba}"
             },
             {
               "$type": "Document",
@@ -68,7 +68,7 @@
               "RelativeDocumentMoniker": "PlopMachine.cs",
               "ToolTip": "C:\\Users\\Intikus\\Downloads\\Created Folders\\Transport\\Plop Machine\\PlopMachine.cs",
               "RelativeToolTip": "PlopMachine.cs",
-              "ViewState": "AQIAAP4EAAAAAAAAAAAswEQFAAA0AAAA",
+              "ViewState": "AQIAALUDAAAAAAAAAADwv8oDAAAmAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2024-04-22T17:30:19.824Z",
               "EditorCaption": ""
@@ -81,7 +81,7 @@
               "RelativeDocumentMoniker": "PlopMachine.cs",
               "ToolTip": "C:\\Users\\Intikus\\Downloads\\Created Folders\\Transport\\Plop Machine\\PlopMachine.cs",
               "RelativeToolTip": "PlopMachine.cs",
-              "ViewState": "AQIAABsFAAAAAAAAAAAAADMFAABHAAAA",
+              "ViewState": "AQIAAIoDAAAAAAAAAAAqwKADAAAjAAAA",
               "Icon": "ae27a6b0-e345-4288-96df-5eaf394ee369.000738|",
               "WhenOpened": "2024-06-04T22:11:28.155Z"
             }
