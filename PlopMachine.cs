@@ -230,6 +230,7 @@ namespace PlopMachine
                     StartthefuckingWaitDict();
                     NoteMagazine.fuckinginitthatdictlineagebitch();
                     ChitChat.InitializethisFuckingFullShit();
+                    ChitChat.InitializethisFUCKINGshit();
                     Debug("Checking files");
                     string[] mydirs = AssetManager.ListDirectory("soundeffects", false, true);
                     Debug("Printing all directories in soundeffects");
@@ -1268,7 +1269,7 @@ namespace PlopMachine
                 //normal      FUCKING 
                 Debug(stepsequenceindex + " is the current name");
                 Debug(stepbuffer + " " + stepsequence[stepsequenceindex] + " are the Steps Evaluated");
-                /*
+                
                 if (stepsequence[stepsequenceindex] == Step.twice && stepbuffer != Step.twice)
                 {
                     //Debug("Fuckoff");
@@ -1280,15 +1281,14 @@ namespace PlopMachine
                     stepbuffer = stepsequence[stepsequenceindex];
                     stepsequenceindex = stepsequenceindex + 1 < stepsequence.Length ? stepsequenceindex + 1 : 0;
                 }   
-                */
+                
                 stepbuffer = stepsequence[stepsequenceindex];
-
 
                 if (stepsequenceindex == 0)
                 {
                     //do the things you do when you loop
                     Debug("Has looped");
-                    Debug(Json.Serializer.Serialize(stepsequence));
+                    Debug("Json after has looped: " + Json.Serializer.Serialize(stepsequence));
                     steparrangment.Clear();
 
                     //foreach (Step[] sequence in sequencepiecearrangement)
@@ -1304,7 +1304,7 @@ namespace PlopMachine
                         steparrangment.Add(MainSequence[i]);
                     }
 
-                    if (UnityEngine.Random.Range(0, 3) == 0)
+                    if (UnityEngine.Random.Range(0, 3) == 0) //Something wrong with this
                     {
                         int randoooooo = UnityEngine.Random.Range(0, 4);
                         List<Step[]> ayeee = SequencePieceNotADict[randoooooo];
@@ -1317,7 +1317,7 @@ namespace PlopMachine
                     }
 
                     stepsequence = steparrangment.ToArray();
-                    Debug(Json.Serializer.Serialize(stepsequence));
+                    Debug("Step sequence after everything" + Json.Serializer.Serialize(stepsequence));
                 }
             }
             public static void InstantiateFull(PlopMachine plopMachine)
