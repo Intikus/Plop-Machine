@@ -871,7 +871,7 @@ namespace PlopMachine
             static public bool arpgoingupwards = false;
             static int arptimer = 20;
 
-            static bool[] arppattern = [true, true, true, false];
+            static bool[] arppattern = [true, true, true, true];
             //static bool[] arppattern = [true, true, true, true, true, false, true, false, false, true, true, false];
             //static bool[] arppattern = [true, true, true, true, true, true, false, false, true, false, false];
             static int arppatternindex = 0;
@@ -1169,7 +1169,7 @@ namespace PlopMachine
                 if (!isindividualistic) { Analyze(plopMachine); }
 
                 if (UnityEngine.Random.Range(0, 2) == 1) RandomMode();
-                arpingmode = Arpmode.upwards; //FOR TESTING, REMOVE AFTERWARDS
+                //arpingmode = Arpmode.upwards; //FOR TESTING, REMOVE AFTERWARDS
                 arppatternindex = 0;
                 
                 //
@@ -1308,7 +1308,7 @@ namespace PlopMachine
                 BreakUndoStopwatch = 0;
                 randomsetsacrificeboard.Clear();
                 arpbufferfreq = (int)(Mathf.PerlinNoise((float)arpcounterstopwatch / 1000f, (float)arpcounterstopwatch / 4000f) * 5);
-                arpbufferfreq = 3; //TESTING 
+                //arpbufferfreq = 3; //TESTING 
                 if (!isindividualistic) { Analyze(plopmachine); }
             }
             public static void RandomMode()
@@ -1818,7 +1818,7 @@ namespace PlopMachine
             CurrentRegion ??= "sl";
 
             fichtean = Mathf.PerlinNoise(debugstopwatch / 1000f, debugstopwatch / 4000f);
-            fichtean = thenumber;
+            //fichtean = thenumber;
             //Debug("Fichtean: " + fichtean + " Yeah");
             //Debug("Chordexhaustion: " + chordexhaustion + " Yeah");
             PlayEntry(mic);
@@ -1854,7 +1854,7 @@ namespace PlopMachine
             //    else 
             //                Plop("S-5-1", mic); 
             //    
-            //    //Debug("Fourth"); 
+            //    //Debug("Fourth");
             //}
             if (Wait.Until("eight", 1, debugstopwatch) == theothernumber)
             {
